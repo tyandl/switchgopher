@@ -55,6 +55,9 @@ func switchesHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 	}
 }
 
+// vlansHandler renders /campus/vlans/: every VLAN with its device and port counts
+// and utilization. Query: sort=Vlan|Name, and unused=1 to include VLANs that no
+// port uses.
 func vlansHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 	p := map[string]Any{
 		"Title":   "Vlans",
@@ -192,6 +195,8 @@ func searchHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 	}
 }
 
+// getDevices lists the device names that match the current Category, Building,
+// Room, ModelNum and Num filters; an empty filter matches everything.
 func getDevices(db *sql.DB, urlQuery map[string]string) []string {
 	var Result string
 	var results []string
@@ -220,6 +225,10 @@ func getDevices(db *sql.DB, urlQuery map[string]string) []string {
 	return results
 }
 
+// getSelection builds the options for one dependent drop-down on the Devices
+// page (the values of devices column name), filtered by the other drop-downs'
+// current choices. name is pasted into the SQL, so it must only ever be one of
+// the fixed column names the caller passes, never user input.
 func getSelection(db *sql.DB, name string, urlQuery map[string]string) []string {
 	var Result string
 	var results []string

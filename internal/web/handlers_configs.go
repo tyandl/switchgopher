@@ -44,6 +44,8 @@ func configFolder(key string) (string, bool) {
 	return folder, true
 }
 
+// configHandler renders /campus/switches/configs/config/ for one saved config
+// file. Query: switch, folder (config_dir or dated_config_dir) and file.
 func configHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 	p := map[string]Any{
 		"Title":   "Config",

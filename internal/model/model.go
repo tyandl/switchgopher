@@ -6,6 +6,10 @@ package model
 
 import "time"
 
+// Device is one switch's identity and system information as gathered by a
+// poll. The poller fills Device, Address and CommunityString from the seeded
+// devices row; everything else comes from SNMP. Empty or zero means the
+// device did not report that value.
 type Device struct {
 	Device          string // device's hostname
 	Address         string // device's IP
@@ -67,6 +71,9 @@ type Device struct {
 	IsLayer3 bool
 }
 
+// Port is one interface's state on a device at poll time. Most values are
+// kept as they come from SNMP, so numeric fields that are optional are
+// strings (empty when not reported); see each field's comment.
 type Port struct {
 	Port       string // ifIndex - the only universally-present integer identifier
 	Device     string // Device Port is on
@@ -117,6 +124,9 @@ type Port struct {
 	OutDiscards int64
 }
 
+// Node is one sighting of a MAC address on a switch port (from the switch's
+// forwarding table), optionally enriched with the IP address, hostname and
+// CDP neighbor information learned for it.
 type Node struct {
 	Mac       string    // mac address in 00:00:00:00:00:00 form
 	Ip        string    // ipv4 address - not populated this pass (would need an ARP-table walk)

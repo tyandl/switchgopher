@@ -13,6 +13,8 @@ type vlanMember struct {
 	Device, Port, Role, State, Speed, Description string
 }
 
+// vlanHandler renders /campus/vlans/vlan/?vlan=<id>: one VLAN's name and subnet,
+// and the ports that use it.
 func vlanHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 	p := map[string]Any{
 		"Title":   "Vlan",

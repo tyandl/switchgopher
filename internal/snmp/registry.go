@@ -17,6 +17,8 @@ type Vendor string
 // falls back to it when no vendor-specific implementation is registered.
 const VendorGeneric Vendor = "generic"
 
+// The fetch groups. Each is a coherent SNMP operation with its own interface
+// in groups.go, so vendors can override one group without touching the rest.
 const (
 	GroupIdentity           GroupName = "identity"
 	GroupPorts              GroupName = "ports"

@@ -61,11 +61,14 @@ type portStateCounts struct {
 	Unknown                   int
 }
 
-// TotalVirtual/TotalNonVirtual must be exported - stats.tmpl calls them,
-// and html/template can only invoke exported methods via reflection.
+// TotalVirtual is the number of virtual ports in any state. It and
+// TotalNonVirtual must be exported: stats.tmpl calls them, and html/template
+// can only invoke exported methods via reflection.
 func (c portStateCounts) TotalVirtual() int {
 	return c.ActiveVirtual + c.InactiveVirtual + c.DisabledVirtual
 }
+
+// TotalNonVirtual is the number of non-virtual ports in any state.
 func (c portStateCounts) TotalNonVirtual() int {
 	return c.Active + c.Inactive + c.Disabled
 }
@@ -96,6 +99,9 @@ type moduleModelCount struct {
 	Count              int
 }
 
+// statsHandler renders /campus/stats/: network-wide totals (switch and module
+// models, port states and types, VLANs in use, unique IP addresses, and a
+// per-switch breakdown). Each section comes from its own helper query.
 func statsHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 	p := map[string]Any{
 		"Title":   "Stats",

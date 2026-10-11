@@ -120,6 +120,8 @@ func (a *Auth) setCookie(w http.ResponseWriter, req *http.Request, value string,
 	})
 }
 
+// LoginHandler shows the login form (GET) and checks credentials (POST). On
+// success it sets the session cookie and redirects to the "next" page.
 func (a *Auth) LoginHandler(w http.ResponseWriter, req *http.Request) {
 	p := map[string]Any{
 		"Title":   "Login",
@@ -149,6 +151,7 @@ func (a *Auth) LoginHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// LogoutHandler clears the session cookie and returns to the login page.
 func (a *Auth) LogoutHandler(w http.ResponseWriter, req *http.Request) {
 	a.setCookie(w, req, "", time.Unix(0, 0))
 	http.Redirect(w, req, "/login/", http.StatusSeeOther)

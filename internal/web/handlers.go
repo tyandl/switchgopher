@@ -12,7 +12,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// Version is shown in the page footer and the Generator meta tag.
 const Version = "0.0.1"
+
+// Author is shown in the page footer and the Author meta tag.
 const Author = "Timothy Yandl"
 
 // type def interface{} for readability

@@ -48,10 +48,12 @@ func init() {
 // given flag name, no good for a list).
 type patternList []string
 
+// String implements flag.Value.
 func (p *patternList) String() string {
 	return strings.Join(*p, ", ")
 }
 
+// Set implements flag.Value; each occurrence of the flag appends one pattern.
 func (p *patternList) Set(value string) error {
 	*p = append(*p, value)
 	return nil

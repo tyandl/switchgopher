@@ -37,7 +37,7 @@ var pollOnce = flag.String("pollonce", "", "Poll a single device (by name, as al
 // configuration/*.json and exit - how the database gets recreated if it's
 // lost or rebuilt from scratch. See store.Seed's doc comment for exactly
 // what it does and does not touch.
-var seed = flag.Bool("seed", false, "Populate/refresh buildings, categories, vlans, and devices from configuration/*.json, then exit")
+var seed = flag.Bool("seed", false, "Load configuration/*.json and the MAC-vendor (OUI) list into the database, then exit. A database that has never been seeded is seeded automatically at startup, so this is for reloading after edits")
 
 // httpPort is set via -port so more than one instance can run at once
 // (e.g. a real dev server plus a throwaway one for testing) without both
@@ -65,6 +65,10 @@ func seedAll(database *sql.DB) error {
 	return nil
 }
 
+// main parses flags, opens the database and then does one of: print a password
+// hash, seed the database, run discovery, poll one device, or (the normal case)
+// start the background poller and the web server. A database that has never
+// been seeded is seeded automatically first.
 func main() {
 	flag.Parse()
 

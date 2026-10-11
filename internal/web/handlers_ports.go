@@ -11,6 +11,8 @@ import (
 // counterRow is one In/Out pair for the I/O counters table on port.tmpl.
 type counterRow struct{ Metric, In, Out string }
 
+// portHandler renders /campus/ports/port/?device=<device>&port=<ifIndex>: one
+// port's settings and its traffic counters.
 func portHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 	p := map[string]Any{
 		"Title":   "Port",
@@ -120,6 +122,8 @@ func portHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 // node.tmpl.
 type nodeRow struct{ Date, CDP, NIC, Mac, IP, Host string }
 
+// nodeHandler renders /campus/ports/node/?mac=<mac>: every recorded sighting of
+// one MAC address.
 func nodeHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 	p := map[string]Any{
 		"Title":   "Node",

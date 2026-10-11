@@ -51,6 +51,9 @@ func ApplyPatterns(candidates []Candidate, patterns []*regexp.Regexp) []Candidat
 	return out
 }
 
+// applyPatternsToOne tries each pattern in order against c.Device. The first
+// one that matches sets the fields its named groups captured, and the rest are
+// not tried.
 func applyPatternsToOne(c Candidate, patterns []*regexp.Regexp) Candidate {
 	for _, re := range patterns {
 		match := re.FindStringSubmatch(c.Device)

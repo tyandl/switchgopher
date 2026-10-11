@@ -111,6 +111,8 @@ func sinceLabel(since sql.NullInt64) string {
 	return time.Unix(since.Int64, 0).Format("01/02/2006")
 }
 
+// portsHandler renders /campus/switches/ports/?switch=<device>: one row per port
+// with the device last seen on it, plus a table of EtherChannel (aggregate) members.
 func portsHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 	p := map[string]Any{
 		"Title":   "Ports",
@@ -277,6 +279,8 @@ func portsHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 // infoRow is one label/value row in the switch info table (see info.tmpl).
 type infoRow struct{ Label, Value string }
 
+// infoHandler renders /campus/switches/info/?switch=<device>: model, firmware,
+// location, contact, address and uptime, plus the chassis modules.
 func infoHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 	p := map[string]Any{
 		"Title":   "Info",
@@ -410,6 +414,8 @@ func findDatedConfigs(category, device string) []string {
 	return dated
 }
 
+// configsHandler renders /campus/switches/configs/?switch=<device>: links to the
+// device's current saved config and its dated snapshots.
 func configsHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 	p := map[string]Any{
 		"Title":   "Configs",
