@@ -72,7 +72,7 @@ func unusedHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		ORDER BY p.Since ASC
 	`, urlQuery["Building"], urlQuery["Room"], urlQuery["Device"])
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 	defer rows.Close()
@@ -84,7 +84,7 @@ func unusedHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		var label sql.NullString
 		if err := rows.Scan(&device, &building, &room, &portNum, &vlan, &speed, &duplex, &label,
 			&since, &state, &adminState, &ifType); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			internalError(w, req, err)
 			return
 		}
 
@@ -106,7 +106,7 @@ func unusedHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		})
 	}
 	if err := rows.Err(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 	p["Row"] = out
@@ -117,7 +117,7 @@ func unusedHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 	}
 
 	if err := templates.ExecuteTemplate(w, "unused.tmpl", &p); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 }

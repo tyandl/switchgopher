@@ -162,7 +162,7 @@ func portsHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		ORDER BY p.Port
 	`, device)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 	defer rows.Close()
@@ -173,7 +173,7 @@ func portsHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		var portNum, state, adminState, speed, duplex, isTrunk, since, vlan, auxVlan, poeActive, aggregatePort sql.NullInt64
 		var label, mac, ip, host, cdpID, nic, poeClass sql.NullString
 		if err := rows.Scan(&portNum, &state, &adminState, &speed, &duplex, &isTrunk, &since, &vlan, &auxVlan, &poeActive, &poeClass, &aggregatePort, &label, &mac, &ip, &host, &cdpID, &nic); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			internalError(w, req, err)
 			return
 		}
 
@@ -212,7 +212,7 @@ func portsHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		}
 	}
 	if err := rows.Err(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 
@@ -237,7 +237,7 @@ func portsHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		ORDER BY AggregatePort, Port
 	`, device)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 	defer aggRows.Close()
@@ -247,7 +247,7 @@ func portsHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 	for aggRows.Next() {
 		var aggPort, memberPort sql.NullInt64
 		if err := aggRows.Scan(&aggPort, &memberPort); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			internalError(w, req, err)
 			return
 		}
 		key := fmt.Sprint(aggPort.Int64)
@@ -260,7 +260,7 @@ func portsHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		agg.Members = append(agg.Members, fmt.Sprint(memberPort.Int64))
 	}
 	if err := aggRows.Err(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 
@@ -271,7 +271,7 @@ func portsHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 	p["Aggregates"] = aggregates // ports.tmpl hides this table entirely when empty
 
 	if err := templates.ExecuteTemplate(w, "ports.tmpl", &p); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 }
@@ -300,7 +300,7 @@ func infoHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		FROM devices WHERE Device = ?
 	`, device)
 	if err := row.Scan(&model, &software, &firmware, &name, &location, &contact, &address, &uptime); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 
@@ -328,7 +328,7 @@ func infoHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		FROM modules WHERE Device = ? ORDER BY Module
 	`, device)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 	defer modRows.Close()
@@ -338,7 +338,7 @@ func infoHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		var modNum sql.NullInt64
 		var description, modModel, fw, hw, sw, serial sql.NullString
 		if err := modRows.Scan(&modNum, &description, &modModel, &fw, &hw, &sw, &serial); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			internalError(w, req, err)
 			return
 		}
 		modules = append(modules, moduleInfo{
@@ -354,13 +354,13 @@ func infoHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		})
 	}
 	if err := modRows.Err(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 	p["Modules"] = modules
 
 	if err := templates.ExecuteTemplate(w, "info.tmpl", &p); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 }
@@ -431,7 +431,7 @@ func configsHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 
 	category, err := deviceCategory(db, device)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 
@@ -439,7 +439,7 @@ func configsHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 	p["Dated"] = findDatedConfigs(category, device)
 
 	if err := templates.ExecuteTemplate(w, "configs.tmpl", &p); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 }
@@ -463,7 +463,7 @@ func diffsHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 
 	category, err := deviceCategory(db, device)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 
@@ -471,7 +471,7 @@ func diffsHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 	p["Dated"] = findDatedConfigs(category, device)
 
 	if err := templates.ExecuteTemplate(w, "diffs.tmpl", &p); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 }

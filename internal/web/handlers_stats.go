@@ -110,7 +110,7 @@ func statsHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 
 	switches, totalSwitches, err := switchModelCounts(db)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 	p["Switches"] = switches
@@ -118,7 +118,7 @@ func statsHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 
 	modules, totalModules, err := moduleModelCounts(db)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 	p["Modules"] = modules
@@ -126,7 +126,7 @@ func statsHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 
 	states, types, vlanCount, details, err := portStats(db)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 	p["PortStates"] = states
@@ -146,13 +146,13 @@ func statsHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 
 	var ipCount int
 	if err := db.QueryRow(`SELECT COUNT(DISTINCT Ip) FROM nodes`).Scan(&ipCount); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 	p["IpCount"] = ipCount
 
 	if err := templates.ExecuteTemplate(w, "stats.tmpl", &p); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 }

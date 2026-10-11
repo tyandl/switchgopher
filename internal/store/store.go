@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"strconv"
 	"time"
@@ -27,22 +27,19 @@ func Connect(path string) (*sql.DB, error) {
 	// Set up a connection to the db. Connection will be established later.
 	db, err := sql.Open("sqlite", path+"?_pragma=busy_timeout(5000)")
 	if err != nil {
-		log.Println("Unable to setup database connection")
-		return nil, err
+		return nil, fmt.Errorf("opening database %s: %w", path, err)
 	}
 	// Pinging the db should establish a connection.
 	err = db.Ping()
 	if err != nil {
-		log.Println("The database information was valid but no connection was made.")
-		return db, err
+		return db, fmt.Errorf("connecting to database %s: %w", path, err)
 	}
 	// attempt to set foreign key constraint on.
 	_, err = db.Exec("PRAGMA foreign_keys = YES")
 	if err != nil {
 		// failing to set the foreign key constraint is a fatal error to protect the
 		// database's integrity...
-		log.Println("Unable to set PRAGMA foreign_keys = YES ", err)
-		return db, err
+		return db, fmt.Errorf("enabling foreign keys: %w", err)
 	}
 	return db, nil
 }
@@ -70,19 +67,23 @@ func Setup(database *sql.DB) error {
 	// query the master table for the names of all existing tables
 	rows, err := database.Query(`SELECT name FROM sqlite_master WHERE type='table';`)
 	if err != nil {
-		log.Println("Unable to Query the master table. Aborting.", err)
-		return err
+		return fmt.Errorf("listing existing tables: %w", err)
 	}
+	defer rows.Close()
 	for rows.Next() {
-		rows.Scan(&Result)
+		if err := rows.Scan(&Result); err != nil {
+			return fmt.Errorf("listing existing tables: %w", err)
+		}
 		delete(tables, Result)
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("listing existing tables: %w", err)
 	}
 	// execute the creation of all non-existing tables
 	for k, v := range tables {
 		_, err = database.Exec(v)
 		if err != nil {
-			log.Println("Unable to setup table ", k, " ", err)
-			return err
+			return fmt.Errorf("creating table %s: %w", k, err)
 		}
 	}
 
@@ -298,7 +299,7 @@ func Seed(database *sql.DB) error {
 		if errors.Is(err, os.ErrNotExist) {
 			// The real files are gitignored (only *.example.json is
 			// shipped), so a missing one just means "nothing configured".
-			log.Printf("%s not found, treating as empty\n", f.path)
+			slog.Warn("config file not found; treating it as empty", "file", f.path)
 			continue
 		}
 		if err != nil {
@@ -366,8 +367,9 @@ func Seed(database *sql.DB) error {
 		}
 	}
 
-	log.Printf("seeded %d buildings, %d categories, %d vlans, %d devices\n",
-		len(buildingsFile.Buildings), len(categoriesFile.Categories), len(vlansFile.Vlans), len(devicesFile.Devices))
+	slog.Info("seeded site data",
+		"buildings", len(buildingsFile.Buildings), "categories", len(categoriesFile.Categories),
+		"vlans", len(vlansFile.Vlans), "devices", len(devicesFile.Devices))
 	return nil
 }
 
@@ -420,7 +422,7 @@ func SeedOui(database *sql.DB, csvPath string) error {
 	if err := tx.Commit(); err != nil {
 		return err
 	}
-	log.Printf("seeded %d oui vendor codes\n", len(vendors))
+	slog.Info("seeded OUI vendor codes", "count", len(vendors))
 	return nil
 }
 

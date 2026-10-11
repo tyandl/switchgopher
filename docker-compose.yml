@@ -12,6 +12,13 @@ services:
     ports:
       - "8000:8000"
     env_file: .env
+    # Docker keeps container logs forever by default. This caps them at
+    # 5 files of 10 MB each (the "local" driver compresses rotated files).
+    logging:
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "5"
     volumes:
       - data:/data
       - ./configuration:/app/configuration

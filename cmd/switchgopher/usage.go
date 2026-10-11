@@ -23,6 +23,7 @@ type usageGroup struct {
 var usageGroups = []usageGroup{
 	{"Server (the default when no action flag is given)", []string{"port", "db", "auth-user", "auth-password-hash"}},
 	{"One-shot actions (do one thing, then exit)", []string{"seed", "hash-password", "pollonce", "discover"}},
+	{"Logging (applies to every mode)", []string{"log-level", "log-format"}},
 	{"Discovery options (used with -discover)", []string{
 		"discover-subnet", "discover-cdp", "discover-community", "discover-port",
 		"discover-pattern", "discover-output", "discover-buildings-output",
@@ -60,6 +61,8 @@ Examples:
 Environment:
   SWITCHGOPHER_PASSWORD_HASH   bcrypt hash of the web login password
                                (the server will not start without one)
+  SWITCHGOPHER_LOG_LEVEL       default for -log-level (debug, info, warn, error)
+  SWITCHGOPHER_LOG_FORMAT      default for -log-format (text, json)
   <NAME>                       any variable referenced as ${NAME} in
                                configuration/devices.json, read when a device
                                is polled

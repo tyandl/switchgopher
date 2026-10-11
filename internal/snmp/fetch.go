@@ -1,13 +1,30 @@
 package snmp
 
 import (
+	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 
 	"github.com/gosnmp/gosnmp"
 
 	"github.com/tyandl/switchgopher/internal/model"
 )
+
+// ErrNotSupported is wrapped by a fetcher's error when the device simply does
+// not offer the thing being fetched (no temperature sensor, an optional MIB
+// object it lacks). That is expected for many devices, so FetchAll logs it at
+// Debug level instead of Warn.
+var ErrNotSupported = errors.New("not supported by this device")
+
+// logOptionalFailure logs a failed best-effort group: Debug if the device just
+// does not support it, Warn for anything else (timeouts, malformed answers).
+func logOptionalFailure(group, target string, err error) {
+	if errors.Is(err, ErrNotSupported) {
+		slog.Debug("device does not support an optional feature", "group", group, "target", target, "reason", err)
+		return
+	}
+	slog.Warn("optional SNMP fetch failed; continuing without it", "group", group, "target", target, "err", err)
+}
 
 // Result is everything FetchAll gathered for one device in one poll.
 type Result struct {
@@ -34,7 +51,7 @@ func FetchAll(snmp *gosnmp.GoSNMP) (Result, error) {
 
 	if r, ok := resolveIdentity(vendor); ok {
 		if err := r.ResolveIdentity(snmp, &dev); err != nil {
-			log.Printf("fetchAll: resolveIdentity: %v", err)
+			logOptionalFailure("resolveIdentity", snmp.Target, err)
 		}
 	}
 
@@ -56,7 +73,7 @@ func FetchAll(snmp *gosnmp.GoSNMP) (Result, error) {
 	if f, ok := resolvePortCounters(vendor); ok {
 		counters, err := f.FetchPortCounters(snmp)
 		if err != nil {
-			log.Printf("fetchAll: fetchPortCounters: %v", err)
+			logOptionalFailure("fetchPortCounters", snmp.Target, err)
 		}
 		for ifIndex, c := range counters {
 			if pos, ok := posByIfIndex[ifIndex]; ok {
@@ -73,7 +90,7 @@ func FetchAll(snmp *gosnmp.GoSNMP) (Result, error) {
 	if f, ok := resolvePortAggregation(vendor); ok {
 		aggregation, err := f.FetchPortAggregation(snmp)
 		if err != nil {
-			log.Printf("fetchAll: fetchPortAggregation: %v", err)
+			logOptionalFailure("fetchPortAggregation", snmp.Target, err)
 		}
 		for ifIndex, aggregate := range aggregation {
 			if pos, ok := posByIfIndex[ifIndex]; ok {
@@ -85,7 +102,7 @@ func FetchAll(snmp *gosnmp.GoSNMP) (Result, error) {
 	if f, ok := resolvePortPoE(vendor); ok {
 		poe, err := f.FetchPortPoE(snmp)
 		if err != nil {
-			log.Printf("fetchAll: fetchPortPoE: %v", err)
+			logOptionalFailure("fetchPortPoE", snmp.Target, err)
 		}
 		for ifIndex, p := range poe {
 			if pos, ok := posByIfIndex[ifIndex]; ok {
@@ -98,7 +115,7 @@ func FetchAll(snmp *gosnmp.GoSNMP) (Result, error) {
 	if f, ok := resolvePortDuplex(vendor); ok {
 		duplex, err := f.FetchPortDuplex(snmp)
 		if err != nil {
-			log.Printf("fetchAll: fetchPortDuplex: %v", err)
+			logOptionalFailure("fetchPortDuplex", snmp.Target, err)
 		}
 		for ifIndex, d := range duplex {
 			if pos, ok := posByIfIndex[ifIndex]; ok {
@@ -110,7 +127,7 @@ func FetchAll(snmp *gosnmp.GoSNMP) (Result, error) {
 	if f, ok := resolvePortVlanMembership(vendor); ok {
 		membership, err := f.FetchPortVlanMembership(snmp)
 		if err != nil {
-			log.Printf("fetchAll: fetchPortVlanMembership: %v", err)
+			logOptionalFailure("fetchPortVlanMembership", snmp.Target, err)
 		}
 		for ifIndex, m := range membership {
 			if pos, ok := posByIfIndex[ifIndex]; ok {
@@ -124,44 +141,44 @@ func FetchAll(snmp *gosnmp.GoSNMP) (Result, error) {
 	var modules []model.Module
 	if f, ok := resolveEntityModules(vendor); ok {
 		if modules, err = f.FetchEntityModules(snmp); err != nil {
-			log.Printf("fetchAll: fetchEntityModules: %v", err)
+			logOptionalFailure("fetchEntityModules", snmp.Target, err)
 		}
 	}
 
 	if f, ok := resolveSpanningTree(vendor); ok {
 		if dev.StpTopChanges, err = f.FetchStpTopChanges(snmp); err != nil {
-			log.Printf("fetchAll: fetchStpTopChanges: %v", err)
+			logOptionalFailure("fetchStpTopChanges", snmp.Target, err)
 		}
 	}
 
 	if f, ok := resolveIsLayer3(vendor); ok {
 		if dev.IsLayer3, err = f.ResolveIsLayer3(snmp); err != nil {
-			log.Printf("fetchAll: resolveIsLayer3: %v", err)
+			logOptionalFailure("resolveIsLayer3", snmp.Target, err)
 		}
 	}
 
 	if f, ok := resolveTemperature(vendor); ok {
 		if dev.Temp, err = f.FetchTemperature(snmp); err != nil {
-			log.Printf("fetchAll: fetchTemperature: %v", err)
+			logOptionalFailure("fetchTemperature", snmp.Target, err)
 		}
 	}
 
 	if f, ok := resolveCpuMemory(vendor); ok {
 		if dev.Cpu, dev.Memory, err = f.FetchCpuMemory(snmp); err != nil {
-			log.Printf("fetchAll: fetchCpuMemory: %v", err)
+			logOptionalFailure("fetchCpuMemory", snmp.Target, err)
 		}
 	}
 
 	if f, ok := resolveConfigManagement(vendor); ok {
 		if dev.ConfigUpdated, err = f.FetchConfigUpdated(snmp); err != nil {
-			log.Printf("fetchAll: fetchConfigUpdated: %v", err)
+			logOptionalFailure("fetchConfigUpdated", snmp.Target, err)
 		}
 	}
 
 	var vlanNames map[int]string
 	if f, ok := resolveVlanNames(vendor); ok {
 		if vlanNames, err = f.FetchVlanNames(snmp); err != nil {
-			log.Printf("fetchAll: fetchVlanNames: %v", err)
+			logOptionalFailure("fetchVlanNames", snmp.Target, err)
 		}
 	}
 

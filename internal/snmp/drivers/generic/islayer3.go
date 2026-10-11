@@ -44,7 +44,7 @@ func (isLayer3Resolver) ResolveIsLayer3(s *gosnmp.GoSNMP) (bool, error) {
 	}
 	v := result.Variables[0]
 	if v.Type == gosnmp.NoSuchObject || v.Type == gosnmp.NoSuchInstance {
-		return false, fmt.Errorf("resolveIsLayer3: ipForwarding not implemented by this device")
+		return false, fmt.Errorf("resolveIsLayer3: ipForwarding: %w", snmp.ErrNotSupported)
 	}
 	if gosnmp.ToBigInt(v.Value).Int64() != ipForwardingForwarding {
 		return false, nil

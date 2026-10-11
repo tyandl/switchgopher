@@ -7,10 +7,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gosnmp/gosnmp"
@@ -358,10 +359,16 @@ func StartScheduler(db *sql.DB, interval, timeout time.Duration, concurrency int
 	poll := func() {
 		targets, err := loadDeviceTargets(db)
 		if err != nil {
-			log.Println("startScheduler: loading devices:", err)
+			slog.Error("cannot load the devices to poll", "err", err)
+			return
+		}
+		if len(targets) == 0 {
+			slog.Warn("there are no devices to poll; add them to configuration/devices.json and run -seed")
 			return
 		}
 
+		started := time.Now()
+		var succeeded, failed atomic.Int64
 		sem := make(chan struct{}, concurrency)
 		var wg sync.WaitGroup
 		for _, t := range targets {
@@ -374,39 +381,51 @@ func StartScheduler(db *sql.DB, interval, timeout time.Duration, concurrency int
 				ctx, cancel := context.WithTimeout(context.Background(), timeout)
 				defer cancel()
 
+				deviceStarted := time.Now()
 				if err := pollDevice(ctx, db, t, timeout, maxPerMac); err != nil {
-					log.Printf("poll %s: %v", t.Device, err)
+					failed.Add(1)
+					slog.Warn("device poll failed", "device", t.Device, "err", err)
+					return
 				}
+				succeeded.Add(1)
+				slog.Debug("device polled", "device", t.Device, "took", time.Since(deviceStarted).Round(time.Millisecond))
 			}(t)
 		}
 		wg.Wait()
+		slog.Info("poll cycle complete", "devices", len(targets), "succeeded", succeeded.Load(),
+			"failed", failed.Load(), "took", time.Since(started).Round(time.Millisecond))
 	}
 
 	prune := func() {
 		n, err := store.Prune(db, retain)
 		if err != nil {
-			log.Println("startScheduler: pruning nodes:", err)
+			slog.Error("cannot prune old node sightings", "err", err)
 			return
 		}
 		if n > 0 {
-			log.Printf("startScheduler: pruned %d old node sightings\n", n)
+			slog.Info("pruned old node sightings", "removed", n, "older_than", retain)
 		}
 	}
 
 	arp := func() {
 		targets, err := loadRouterTargets(db)
 		if err != nil {
-			log.Println("startScheduler: loading router targets:", err)
+			slog.Error("cannot load the routers to poll for ARP", "err", err)
 			return
 		}
 		for _, t := range targets {
 			ctx, cancel := context.WithTimeout(context.Background(), timeout)
 			if err := pollArp(ctx, db, t, timeout, dnsOpts); err != nil {
-				log.Printf("pollArp %s: %v", t.Device, err)
+				slog.Warn("router ARP poll failed", "device", t.Device, "err", err)
+			} else {
+				slog.Debug("router ARP polled", "device", t.Device)
 			}
 			cancel()
 		}
 	}
+
+	slog.Info("poller started", "devices_every", interval, "arp_every", arpInterval,
+		"prune_every", pruneInterval, "timeout", timeout, "concurrency", concurrency)
 
 	// prune before the first poll - poll can take minutes across a large,
 	// partly-unreachable device list, and there's no reason retention

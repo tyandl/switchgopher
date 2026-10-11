@@ -3,7 +3,6 @@ package web
 import (
 	"database/sql"
 	"fmt"
-	//	"log"
 	"net/http"
 )
 
@@ -31,7 +30,7 @@ func vlanHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 	var name, subnet sql.NullString
 	row := db.QueryRow(`SELECT Name, Subnet FROM vlans WHERE Vlan = ?`, vlan)
 	if err := row.Scan(&name, &subnet); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 
@@ -50,7 +49,7 @@ func vlanHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		ORDER BY Device, Port
 	`, vlan)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 	defer rows.Close()
@@ -60,7 +59,7 @@ func vlanHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		var device, label, role sql.NullString
 		var port, state, speed sql.NullInt64
 		if err := rows.Scan(&device, &port, &state, &speed, &label, &role); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			internalError(w, req, err)
 			return
 		}
 		members = append(members, vlanMember{
@@ -73,13 +72,13 @@ func vlanHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		})
 	}
 	if err := rows.Err(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 	p["Members"] = members
 
 	if err := templates.ExecuteTemplate(w, "vlan.tmpl", &p); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 }

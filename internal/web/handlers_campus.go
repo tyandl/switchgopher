@@ -3,7 +3,7 @@ package web
 import (
 	"database/sql"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"sort"
 	"time"
@@ -16,7 +16,7 @@ func homeHandler(w http.ResponseWriter, req *http.Request) {
 		"Version": Version,
 	}
 	if err := templates.ExecuteTemplate(w, "home.tmpl", &p); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 }
@@ -49,8 +49,7 @@ func switchesHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 
 	// render the page and send the response.
 	if err := templates.ExecuteTemplate(w, "switches.tmpl", &p); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Println(err)
+		internalError(w, req, err)
 		return
 	}
 }
@@ -103,7 +102,7 @@ func vlansHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		FROM vlans v
 		ORDER BY ` + sortBy)
 	if err != nil {
-		log.Println("Unable to get Vlans from database ", err)
+		slog.Error("cannot query the VLAN list", "err", err)
 		return
 	}
 	defer rows.Close()
@@ -113,7 +112,7 @@ func vlansHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		var v Vlan
 		var activePorts int
 		if err := rows.Scan(&v.Vlan, &v.Name, &v.Subnet, &v.Switches, &v.Ports, &activePorts); err != nil {
-			log.Println("error scanning vlan row", err)
+			slog.Error("cannot read a VLAN row", "err", err)
 			continue
 		}
 		if !showUnused && v.Ports == 0 {
@@ -130,7 +129,7 @@ func vlansHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 	p["Vlans"] = results
 
 	if err := templates.ExecuteTemplate(w, "vlans.tmpl", &p); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 }
@@ -160,7 +159,7 @@ func searchHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 			ORDER BY TimeStamp DESC
 		`, like, like)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			internalError(w, req, err)
 			return
 		}
 		defer rows.Close()
@@ -170,7 +169,7 @@ func searchHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 			var device, cdp, ip, host sql.NullString
 			var port sql.NullInt64
 			if err := rows.Scan(&ts, &device, &port, &cdp, &ip, &host); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				internalError(w, req, err)
 				return
 			}
 			out = append(out, searchRow{
@@ -183,14 +182,14 @@ func searchHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 			})
 		}
 		if err := rows.Err(); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			internalError(w, req, err)
 			return
 		}
 	}
 	p["Row"] = out
 
 	if err := templates.ExecuteTemplate(w, "search.tmpl", &p); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 }
@@ -215,7 +214,8 @@ func getDevices(db *sql.DB, urlQuery map[string]string) []string {
 		urlQuery["Num"],
 	)
 	if err != nil {
-		log.Panicln("error querying database ", err)
+		slog.Error("cannot list the devices for the filter", "err", err)
+		return nil
 	}
 	for rows.Next() {
 		rows.Scan(&Result)
@@ -250,7 +250,8 @@ func getSelection(db *sql.DB, name string, urlQuery map[string]string) []string 
 	)
 	urlQuery[name] = temp
 	if err != nil {
-		log.Panicln("error querying database ", err)
+		slog.Error("cannot list the options for a filter drop-down", "name", name, "err", err)
+		return nil
 	}
 	for rows.Next() {
 		rows.Scan(&Result)

@@ -1,9 +1,15 @@
 package web
 
 import (
+	"context"
+	"crypto/rand"
 	"database/sql"
+	"encoding/hex"
 	"html/template"
+	"log/slog"
 	"net/http"
+	"regexp"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -50,7 +56,7 @@ func NewRouter(db *sql.DB, auth *Auth) http.Handler {
 	// /vlans/
 	router.HandleFunc("/campus/vlans/vlan/", dbHandler(vlanHandler, db))
 
-	return securityHeaders(auth.Middleware(router))
+	return requestID(requestLogger(securityHeaders(auth.Middleware(router))))
 }
 
 // securityHeaders adds baseline browser protections to every response:
@@ -64,4 +70,57 @@ func securityHeaders(next http.Handler) http.Handler {
 		h.Set("Referrer-Policy", "same-origin")
 		next.ServeHTTP(w, req)
 	})
+}
+
+// statusRecorder remembers the status code a handler wrote, for the request log.
+type statusRecorder struct {
+	http.ResponseWriter
+	status int
+}
+
+func (r *statusRecorder) WriteHeader(code int) {
+	r.status = code
+	r.ResponseWriter.WriteHeader(code)
+}
+
+// requestLogger logs every request at Debug level: method, path, status and
+// how long it took. It logs the path but not the query string, which can carry
+// MAC addresses and hostnames, and never the request body (the login form).
+func requestLogger(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		start := time.Now()
+		rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
+		next.ServeHTTP(rec, req)
+		slog.Debug("request", "method", req.Method, "path", req.URL.Path, "status", rec.status,
+			"took", time.Since(start).Round(time.Microsecond), "remote", req.RemoteAddr, "request_id", requestIDFrom(req.Context()))
+	})
+}
+
+type requestIDKey struct{}
+
+// validRequestID restricts an ID supplied by a client or proxy to a short,
+// harmless token, so it cannot be used to inject text into the logs.
+var validRequestID = regexp.MustCompile(`^[A-Za-z0-9._-]{1,64}$`)
+
+// requestID gives every request an ID, stores it in the request context (see
+// requestIDFrom) and returns it in the X-Request-ID response header. A valid
+// X-Request-ID sent by a reverse proxy is reused, so one request can be followed
+// from the proxy's log into this one; anything else is replaced.
+func requestID(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		id := req.Header.Get("X-Request-ID")
+		if !validRequestID.MatchString(id) {
+			b := make([]byte, 6)
+			rand.Read(b) // never fails on supported platforms
+			id = hex.EncodeToString(b)
+		}
+		w.Header().Set("X-Request-ID", id)
+		next.ServeHTTP(w, req.WithContext(context.WithValue(req.Context(), requestIDKey{}, id)))
+	})
+}
+
+// requestIDFrom returns the ID requestID stored in ctx, or "" if there is none.
+func requestIDFrom(ctx context.Context) string {
+	id, _ := ctx.Value(requestIDKey{}).(string)
+	return id
 }

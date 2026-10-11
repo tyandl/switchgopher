@@ -90,5 +90,5 @@ func (temperatureFetcher) FetchTemperature(s *gosnmp.GoSNMP) (float64, error) {
 			math.Pow(10, float64(row.Precision))
 		return celsius, nil
 	}
-	return 0, fmt.Errorf("fetchTemperature: no celsius sensor found")
+	return 0, fmt.Errorf("fetchTemperature: no celsius sensor found: %w", snmp.ErrNotSupported)
 }

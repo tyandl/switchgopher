@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"regexp"
@@ -67,7 +66,7 @@ func (p *patternList) Set(value string) error {
 // neighbors, credentials, need a human's review first.
 func runDiscovery(database *sql.DB) {
 	if err := snmp.InitMIBs("resources/mibs"); err != nil {
-		log.Fatal(err)
+		fatal("cannot load the MIB files", "err", err)
 	}
 
 	probeTimeout := *discoverProbeTimeout
@@ -76,7 +75,7 @@ func runDiscovery(database *sql.DB) {
 
 	known, err := loadKnownAddresses(database)
 	if err != nil {
-		log.Fatalf("discover: loading known devices: %v", err)
+		fatal("discovery: cannot load known devices", "err", err)
 	}
 
 	ctx := context.Background()
@@ -104,16 +103,16 @@ func runDiscovery(database *sql.DB) {
 	if *discoverCDP != "" {
 		session, err := scheduler.BuildSessionForDevice(ctx, database, *discoverCDP, fetchTimeout)
 		if err != nil {
-			log.Fatalf("discover: %v", err)
+			fatal("discovery failed", "err", err)
 		}
 		if err := session.Connect(); err != nil {
-			log.Fatalf("discover: connect %s: %v", *discoverCDP, err)
+			fatal("discovery: cannot connect to the CDP seed device", "device", *discoverCDP, "err", err)
 		}
 		defer session.Close()
 
 		candidates, err = discover.CrawlCDP(ctx, session, communityOrDefault(), uint16(*discoverPort), probeTimeout, fetchTimeout, known)
 		if err != nil {
-			log.Fatalf("discover: CDP crawl from %s: %v", *discoverCDP, err)
+			fatal("discovery: CDP crawl failed", "device", *discoverCDP, "err", err)
 		}
 	} else {
 		// Subnet has no safe default - genuinely required, so missing +
@@ -121,17 +120,17 @@ func runDiscovery(database *sql.DB) {
 		subnet := *discoverSubnet
 		if subnet == "" {
 			if *discoverNonInteractive {
-				log.Fatal("discover: -discover-subnet is required in non-interactive mode")
+				fatal("discovery: -discover-subnet is required in non-interactive mode")
 			}
 			subnet = promptString(reader, "Management subnet to sweep (CIDR)", "")
 			if subnet == "" {
-				log.Fatal("discover: a subnet is required")
+				fatal("discovery: a subnet is required")
 			}
 		}
 
 		candidates, err = discover.Sweep(ctx, subnet, communityOrDefault(), uint16(*discoverPort), probeTimeout, fetchTimeout, concurrency, known)
 		if err != nil {
-			log.Fatalf("discover: sweep: %v", err)
+			fatal("discovery: subnet sweep failed", "err", err)
 		}
 	}
 
@@ -146,7 +145,7 @@ func runDiscovery(database *sql.DB) {
 	if len(discoverPatternFlags) > 0 {
 		patterns, err = discover.CompilePatterns(discoverPatternFlags)
 		if err != nil {
-			log.Fatalf("discover: -discover-pattern: %v", err)
+			fatal("discovery: invalid -discover-pattern", "err", err)
 		}
 	} else if !*discoverNonInteractive {
 		patterns = promptPatterns(reader)
@@ -154,18 +153,18 @@ func runDiscovery(database *sql.DB) {
 	candidates = discover.ApplyPatterns(candidates, patterns)
 
 	if err := writeCandidates(*discoverOutput, candidates); err != nil {
-		log.Fatalf("discover: writing %s: %v", *discoverOutput, err)
+		fatal("discovery: cannot write the results", "file", *discoverOutput, "err", err)
 	}
 	fmt.Printf("discovered %d candidate device(s), wrote %s\n", len(candidates), *discoverOutput)
 
 	knownBuildings, err := loadKnownBuildings(database)
 	if err != nil {
-		log.Fatalf("discover: loading buildings: %v", err)
+		fatal("discovery: cannot load known buildings", "err", err)
 	}
 	buildings := discover.DistinctBuildings(candidates, knownBuildings)
 	if len(buildings) > 0 {
 		if err := writeBuildings(*discoverBuildingsOutput, buildings); err != nil {
-			log.Fatalf("discover: writing %s: %v", *discoverBuildingsOutput, err)
+			fatal("discovery: cannot write the buildings", "file", *discoverBuildingsOutput, "err", err)
 		}
 		fmt.Printf("found %d new building(s) from naming patterns, wrote %s\n", len(buildings), *discoverBuildingsOutput)
 	}
@@ -190,7 +189,7 @@ func promptPatterns(reader *bufio.Reader) []*regexp.Regexp {
 	}
 	patterns, err := discover.CompilePatterns(raw)
 	if err != nil {
-		log.Fatalf("discover: %v", err)
+		fatal("discovery failed", "err", err)
 	}
 	return patterns
 }

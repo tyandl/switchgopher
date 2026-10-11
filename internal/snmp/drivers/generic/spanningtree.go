@@ -37,7 +37,7 @@ func (spanningTreeFetcher) FetchStpTopChanges(s *gosnmp.GoSNMP) (int64, error) {
 	// would look identical to "0 topology changes recorded."
 	v := result.Variables[0]
 	if v.Type == gosnmp.NoSuchObject || v.Type == gosnmp.NoSuchInstance {
-		return 0, fmt.Errorf("fetchStpTopChanges: not implemented by this device")
+		return 0, fmt.Errorf("fetchStpTopChanges: %w", snmp.ErrNotSupported)
 	}
 	return gosnmp.ToBigInt(v.Value).Int64(), nil
 }

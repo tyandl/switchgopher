@@ -5,7 +5,7 @@ package config
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 	"os"
 )
 
@@ -27,23 +27,13 @@ type entry struct {
 func Load(path string) error {
 	prefFile, err := os.Open(path)
 	if err != nil {
-		if os.IsNotExist(err) {
-			log.Printf("%s does not exist\n", path)
-			return err
-		} else if os.IsPermission(err) {
-			log.Printf("bad permissions for %s\n", path)
-			return err
-		} else {
-			log.Printf("could not open %s", path)
-			return err
-		}
+		return fmt.Errorf("opening preferences: %w", err)
 	}
 	defer prefFile.Close()
 
 	var entries map[string]entry
 	if err := json.NewDecoder(prefFile).Decode(&entries); err != nil {
-		log.Println(err)
-		return err
+		return fmt.Errorf("parsing %s: %w", path, err)
 	}
 
 	prefs := make(map[string]interface{}, len(entries))

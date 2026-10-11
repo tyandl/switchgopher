@@ -5,7 +5,7 @@ package web
 import (
 	"database/sql"
 	"html/template"
-	_ "log"
+	"log/slog"
 	"net/http"
 	"path/filepath"
 
@@ -37,6 +37,20 @@ func dbHandler(fn func(http.ResponseWriter, *http.Request, *sql.DB), db *sql.DB)
 // redirectHome, so the path is written in one place.
 const homePath = "/campus/home/"
 
+// internalError logs err together with the request that caused it and answers
+// 500 with a generic message and the request's ID, so a user can quote it and
+// it can be found in the log. The error text stays in the log: it can contain
+// SQL or file paths that a visitor has no business seeing.
+func internalError(w http.ResponseWriter, req *http.Request, err error) {
+	id := requestIDFrom(req.Context())
+	slog.Error("request failed", "method", req.Method, "path", req.URL.Path, "request_id", id, "err", err)
+	msg := "internal server error"
+	if id != "" {
+		msg += " (reference: " + id + ")"
+	}
+	http.Error(w, msg, http.StatusInternalServerError)
+}
+
 // redirectHome sends the client to the home page with a 303 code.
 // 303 "See Other" indicates that the correct response can be found under a
 // different URI and should be retrieved using a GET method.
@@ -55,7 +69,7 @@ func helpHandler(w http.ResponseWriter, req *http.Request) {
 		"Version": Version,
 	}
 	if err := templates.ExecuteTemplate(w, "help.tmpl", &p); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 }

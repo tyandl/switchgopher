@@ -7,6 +7,7 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"errors"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -138,21 +139,26 @@ func (a *Auth) LoginHandler(w http.ResponseWriter, req *http.Request) {
 		if userOK && passErr == nil {
 			expiry := time.Now().Add(sessionTTL)
 			a.setCookie(w, req, a.sign(expiry.Unix()), expiry)
+			slog.Info("login succeeded", "remote", req.RemoteAddr, "request_id", requestIDFrom(req.Context()))
 			http.Redirect(w, req, safeNext(req.PostFormValue("next")), http.StatusSeeOther)
 			return
 		}
+		// The username is deliberately not logged: people sometimes type
+		// their password into that field.
+		slog.Warn("login failed", "remote", req.RemoteAddr, "request_id", requestIDFrom(req.Context()))
 		time.Sleep(500 * time.Millisecond)
 		p["Error"] = "Invalid username or password."
 		w.WriteHeader(http.StatusUnauthorized)
 	}
 
 	if err := templates.ExecuteTemplate(w, "login.tmpl", &p); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 	}
 }
 
 // LogoutHandler clears the session cookie and returns to the login page.
 func (a *Auth) LogoutHandler(w http.ResponseWriter, req *http.Request) {
 	a.setCookie(w, req, "", time.Unix(0, 0))
+	slog.Debug("logged out", "remote", req.RemoteAddr)
 	http.Redirect(w, req, "/login/", http.StatusSeeOther)
 }

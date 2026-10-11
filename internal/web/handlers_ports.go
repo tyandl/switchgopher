@@ -3,7 +3,6 @@ package web
 import (
 	"database/sql"
 	"fmt"
-	//	"log"
 	"net/http"
 	"time"
 )
@@ -43,7 +42,7 @@ func portHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 	`, device, port)
 	if err := row.Scan(&state, &adminState, &speed, &duplex, &isTrunk, &vlan, &auxVlan, &poeActive, &poeClass,
 		&inPackets, &outPackets, &inErrors, &outErrors, &inDiscards, &outDiscards, &label); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 
@@ -84,7 +83,7 @@ func portHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		ORDER BY n.TimeStamp DESC
 	`, device, port)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 	defer rows.Close()
@@ -94,7 +93,7 @@ func portHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		var ts int64
 		var cdp, mac, ip, host, nic sql.NullString
 		if err := rows.Scan(&ts, &cdp, &mac, &ip, &host, &nic); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			internalError(w, req, err)
 			return
 		}
 		history = append(history, nodeRow{
@@ -107,13 +106,13 @@ func portHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		})
 	}
 	if err := rows.Err(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 	p["History"] = history
 
 	if err := templates.ExecuteTemplate(w, "port.tmpl", &p); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 }
@@ -148,7 +147,7 @@ func nodeHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		ORDER BY n.TimeStamp DESC
 	`, mac)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 	defer rows.Close()
@@ -158,7 +157,7 @@ func nodeHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		var ts int64
 		var cdp, macAddr, ip, host, nic sql.NullString
 		if err := rows.Scan(&ts, &cdp, &macAddr, &ip, &host, &nic); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			internalError(w, req, err)
 			return
 		}
 		out = append(out, nodeRow{
@@ -171,13 +170,13 @@ func nodeHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		})
 	}
 	if err := rows.Err(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 	p["Row"] = out
 
 	if err := templates.ExecuteTemplate(w, "node.tmpl", &p); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 }

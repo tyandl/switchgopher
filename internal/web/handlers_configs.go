@@ -81,7 +81,7 @@ func configHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 	}
 
 	if err := templates.ExecuteTemplate(w, "config.tmpl", &p); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 }
@@ -164,7 +164,7 @@ func diffHandler(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 	}
 
 	if err := templates.ExecuteTemplate(w, "diff.tmpl", &p); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, req, err)
 		return
 	}
 }

@@ -2,7 +2,7 @@ package snmp
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"sync"
 )
 
@@ -85,6 +85,6 @@ func resolve(group GroupName, vendor Vendor) (any, bool) {
 			return impl, true
 		}
 	}
-	log.Printf("snmp: no implementation registered for group %q (vendor %q, no generic fallback either) - skipping", group, vendor)
+	slog.Debug("no SNMP implementation for this group; skipping it", "group", group, "vendor", vendor)
 	return nil, false
 }

@@ -49,7 +49,7 @@ func (configManagementFetcher) FetchConfigUpdated(s *gosnmp.GoSNMP) (int64, erro
 
 	lastChanged, uptime := result.Variables[0], result.Variables[1]
 	if lastChanged.Type == gosnmp.NoSuchObject || lastChanged.Type == gosnmp.NoSuchInstance {
-		return 0, fmt.Errorf("fetchConfigUpdated: not implemented by this device")
+		return 0, fmt.Errorf("fetchConfigUpdated: %w", snmp.ErrNotSupported)
 	}
 
 	lastChangedTicks := gosnmp.ToBigInt(lastChanged.Value).Int64()

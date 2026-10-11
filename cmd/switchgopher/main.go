@@ -9,13 +9,14 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/tyandl/switchgopher/internal/config"
+	"github.com/tyandl/switchgopher/internal/logging"
 	"github.com/tyandl/switchgopher/internal/scheduler"
 	"github.com/tyandl/switchgopher/internal/snmp"
 	"github.com/tyandl/switchgopher/internal/store"
@@ -54,6 +55,26 @@ var authUser = flag.String("auth-user", "admin", "Username for the shared web UI
 var authHash = flag.String("auth-password-hash", "", "bcrypt hash of the web UI password (or set SWITCHGOPHER_PASSWORD_HASH); generate one with -hash-password")
 var hashPassword = flag.Bool("hash-password", false, "Read a password from stdin, print its bcrypt hash for -auth-password-hash, then exit")
 
+// Logging: see internal/logging for what belongs at each level. The defaults
+// can come from the environment, which is handier than flags in a container.
+var logLevel = flag.String("log-level", envOr("SWITCHGOPHER_LOG_LEVEL", "info"), "Minimum log level: debug, info, warn or error (or set SWITCHGOPHER_LOG_LEVEL)")
+var logFormat = flag.String("log-format", envOr("SWITCHGOPHER_LOG_FORMAT", "text"), "Log format: text, or json for one JSON object per line (or set SWITCHGOPHER_LOG_FORMAT)")
+
+// envOr returns the environment variable key, or def when it is unset or empty.
+func envOr(key, def string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
+}
+
+// fatal logs msg and its key/value attributes at Error level, then exits with
+// status 1. It stands in for log.Fatal, which slog does not have.
+func fatal(msg string, args ...any) {
+	slog.Error(msg, args...)
+	os.Exit(1)
+}
+
 // seedAll loads configuration/*.json and the MAC-vendor (OUI) list.
 func seedAll(database *sql.DB) error {
 	if err := store.Seed(database); err != nil {
@@ -71,13 +92,17 @@ func seedAll(database *sql.DB) error {
 // been seeded is seeded automatically first.
 func main() {
 	flag.Parse()
+	if err := logging.Setup(os.Stderr, *logLevel, *logFormat); err != nil {
+		fmt.Fprintln(os.Stderr, "switchgopher:", err)
+		os.Exit(2)
+	}
 
 	if *hashPassword {
 		fmt.Fprint(os.Stderr, "Password: ")
 		line, _ := bufio.NewReader(os.Stdin).ReadString('\n')
 		hash, err := web.HashPassword(strings.TrimRight(line, "\r\n"))
 		if err != nil {
-			log.Fatal(err)
+			fatal("cannot hash the password", "err", err)
 		}
 		fmt.Println(hash)
 		return
@@ -86,27 +111,25 @@ func main() {
 	// attempt to establish a connection to the database.
 	database, err := store.Connect(*dbPath)
 	if err != nil {
-		// if dbglvl >= DEBUG {log.Println(err)} // not needed here since err was printed already.
-		log.Println("unable to establish a connection to the database. Shutting down.")
 		if database != nil {
 			// we need to close if the connection was setup but not successfully established.
 			database.Close()
 		}
-		log.Fatal("Closing...")
+		fatal("cannot open the database", "path", *dbPath, "err", err)
 	}
 	defer database.Close()
 	// the database connection was successful, create tables
 	// (If they already exist, no changes will be made)
 	if err := store.Setup(database); err != nil {
-		log.Fatalf("setting up the database schema: %v", err)
+		fatal("cannot set up the database schema", "path", *dbPath, "err", err)
 	}
 	if err := config.Load("configuration/preferences.json"); err != nil {
-		log.Printf("preferences: %v (using built-in defaults)", err)
+		slog.Warn("could not load preferences; using built-in defaults", "file", "configuration/preferences.json", "err", err)
 	}
 
 	if *seed {
 		if err := seedAll(database); err != nil {
-			log.Fatalf("seed: %v", err)
+			fatal("seeding failed", "err", err)
 		}
 		fmt.Println("seeded database successfully")
 		return
@@ -116,11 +139,11 @@ func main() {
 	// seed it once automatically. Later changes to configuration/ still need
 	// an explicit -seed.
 	if fresh, err := store.NeedsSeed(database); err != nil {
-		log.Fatalf("checking whether the database is seeded: %v", err)
+		fatal("cannot check whether the database is seeded", "err", err)
 	} else if fresh {
-		log.Println("database has never been seeded; seeding from configuration/ and the OUI list")
+		slog.Info("database has never been seeded; seeding from configuration/ and the OUI list")
 		if err := seedAll(database); err != nil {
-			log.Fatalf("automatic seed: %v (fix the problem or run with -seed to see it again)", err)
+			fatal("automatic seeding failed (fix the cause, or run with -seed to retry)", "err", err)
 		}
 	}
 
@@ -130,7 +153,7 @@ func main() {
 	}
 
 	if err := snmp.InitMIBs("resources/mibs"); err != nil {
-		log.Fatal(err)
+		fatal("cannot load the MIB files", "dir", "resources/mibs", "err", err)
 	}
 	pollTimeout := time.Duration(config.Int("poll_timeout_seconds", 10)) * time.Second
 	nodeMaxPerMac := config.Int("node_max_per_mac", 10)
@@ -139,7 +162,7 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), pollTimeout)
 		defer cancel()
 		if err := scheduler.PollByName(ctx, database, *pollOnce, pollTimeout, nodeMaxPerMac); err != nil {
-			log.Fatalf("poll %s: %v", *pollOnce, err)
+			fatal("poll failed", "device", *pollOnce, "err", err)
 		}
 		fmt.Printf("polled %s successfully\n", *pollOnce)
 		return
@@ -151,7 +174,7 @@ func main() {
 	}
 	auth, err := web.NewAuth(*authUser, hash)
 	if err != nil {
-		log.Fatalf("web login not configured: %v (generate a hash with: switchgopher -hash-password)", err)
+		fatal("the web login is not configured", "err", err, "hint", "generate a hash with: switchgopher -hash-password")
 	}
 
 	pollInterval := time.Duration(config.Int("poll_interval_seconds", 300)) * time.Second
@@ -166,7 +189,7 @@ func main() {
 
 	// start webserver
 	addr := fmt.Sprintf(":%d", *httpPort)
-	fmt.Printf("listening on %s\n", addr)
+	slog.Info("starting", "version", web.Version, "addr", addr, "db", *dbPath, "log_level", *logLevel)
 	// Explicit timeouts so a slow or stalled client can't hold a connection
 	// open forever (http.ListenAndServe sets none).
 	srv := &http.Server{
@@ -177,7 +200,8 @@ func main() {
 		WriteTimeout:      2 * time.Minute,
 		IdleTimeout:       2 * time.Minute,
 	}
+	slog.Info("web server listening", "addr", addr)
 	if err := srv.ListenAndServe(); err != nil {
-		log.Fatal("Unable to serve web page!")
+		fatal("web server stopped", "addr", addr, "err", err)
 	}
 }
