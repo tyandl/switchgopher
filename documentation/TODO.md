@@ -1286,6 +1286,23 @@ logging driver with `max-size 10m` / `max-file 5`, because Docker's default
 section covers daemon-wide settings, collectors and non-Docker setups. Request
 logging is Debug only.
 
+## Continuous integration (2026-10, done)
+
+`.github/workflows/ci.yml` runs on every pull request, on every push to `main`
+(which is what a merge is) and weekly. The `test` job checks formatting (it
+fails and lists the files if `gofmt -l .` prints anything), then `go vet`,
+`go build` and `go test -race` (the race detector matters because the poller
+runs devices in parallel). The `docker` job builds the image. The `vulncheck`
+job runs `govulncheck`; because new advisories appear without any code change
+it can turn red by itself, which is why it also runs weekly. The Go version
+comes from `go.mod`, so bumping it there bumps CI.
+
+Not done: `staticcheck` (its latest release cannot analyze Go 1.27 yet), and
+branch protection. A failing check does not yet *block* a merge, since commits
+go straight to `main`; to enforce that, add a branch protection rule on `main`
+that requires the `test` and `docker` checks (and a pull request). Private
+repositories need a paid GitHub plan for that.
+
 ## Features switchmap has that SwitchGopher doesn't (yet)
 
 - **Cabling/documentation hygiene audits** - `VerifyPortLabels.pm` and

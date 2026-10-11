@@ -26,6 +26,12 @@ go vet ./...
 go test ./...
 ```
 
+GitHub Actions (`.github/workflows/ci.yml`) runs the first three, plus a build and
+`go test -race`, on every pull request and every push to `main`, so a
+formatting slip or a failing test shows up as a red check. It also builds the
+Docker image, and runs `govulncheck` weekly. Run the same commands locally
+first and CI will pass.
+
 Also worth running now and then: `staticcheck ./...` (needs a release that
 supports your Go version) and `govulncheck ./...` (known vulnerabilities in
 dependencies and the standard library).

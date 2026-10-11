@@ -385,6 +385,10 @@ examples and the environment variables.
 go build ./... && go vet ./... && go test ./...
 ```
 
+Every pull request and push to `main` is checked by GitHub Actions
+(`.github/workflows/ci.yml`): `gofmt` formatting, `go vet`, build, `go test
+-race`, the Docker image build, and a weekly vulnerability scan.
+
 Documentation for contributors:
 
 - [`CONTRIBUTING.md`](CONTRIBUTING.md): environment, checks, running against a
