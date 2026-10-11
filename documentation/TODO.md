@@ -6,6 +6,11 @@ tool this project is a Go rewrite of - the original source is not part of
 this repo; https://github.com/dotysan/switchmap is a public mirror), and
 gaps already flagged inline in the code/commit history.
 
+This file is a design log, one section per feature or decision, newest work
+near the end. For an overview of how the code fits together read
+[ARCHITECTURE.md](ARCHITECTURE.md) first; for how to work on it, see
+[CONTRIBUTING.md](../CONTRIBUTING.md).
+
 ## Note on architecture vs. switchmap
 
 switchmap is a batch script (cron-run) that polls switches and writes static
@@ -595,7 +600,7 @@ the Vlans/Vlan-detail pages that displayed it.
 
 ## vlans.Source - discovery semantics (2026-09)
 
-`vlans.Source` (`'config'` or `'discovered'`, added this session alongside
+`vlans.Source` (`'config'` or `'discovered'`, added alongside
 the SNMP-feasibility question above) exists to let an SNMP poll safely
 auto-name a vlan ID with no entry in `configuration/vlans.json`, without
 ever overwriting anything config declared. Exact rules, as decided:
@@ -891,7 +896,7 @@ the fallback for whichever one has no safe default and wasn't supplied.
   DB each run), so re-running discovery against an increasingly-known
   fleet doesn't keep re-surfacing the same switches.
 - **Naming-convention patterns close the Category/Building/Room gap**
-  (the real insight here, the user's, not switchmap's or an SNMP walk's):
+  (the key insight: no SNMP walk can supply these, but the site's own naming does):
   this project's own device names already encode exactly what SNMP
   can't discover - `HQ-R1-3560-01` = building short code - room - model -
   index. Patterns are regexes with named capture groups
