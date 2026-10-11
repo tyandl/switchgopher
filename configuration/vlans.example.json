@@ -1,0 +1,19 @@
+{
+	"Notes": [
+		"Copy to vlans.json and edit; the real file is gitignored.",
+		"Vlan is the VLAN ID, Name is its label, and Subnet is its subnet in CIDR form.",
+		"Notes is ignored by the app. Delete it freely."
+	],
+	"Vlans":[
+		{
+			"Vlan":10,
+			"Name":"Management",
+			"Subnet":"192.0.2.0/24"
+		},
+		{
+			"Vlan":20,
+			"Name":"Workstations",
+			"Subnet":"198.51.100.0/24"
+		}
+	]
+}

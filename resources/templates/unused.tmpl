@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="EN">
+	<head>
+		{{ template "common_meta" . }}
+	</head>
+
+	<body>
+		{{ template "common_heading_start" }}
+		{{ template "common_heading_end" }}
+		<h2>Unused Ports</h2>
+		<p>Ports inactive for more than {{ .Threshold }} days.</p>
+		<div class="selection">
+			<form method="GET">
+				<ul>
+					<li>
+						Building
+						<select name="Building" onchange="this.form.submit()">
+							{{ range $e := .Building }}
+							<option value="{{ $e }}">{{ if $e }}{{ $e }}{{ else }} {{ end }}</option>
+							{{ end }}
+						</select>
+					</li>
+					<li>
+						Room
+						<select name="Room" onchange="this.form.submit()">
+							{{ range $e := .Room }}
+							<option value="{{ $e }}">{{ if $e }}{{ $e }}{{ else }} {{ end }}</option>
+							{{ end }}
+						</select>
+					</li>
+					<li>
+						Switch
+						<select name="Device" onchange="this.form.submit()">
+							{{ range $e := .Device }}
+							<option value="{{ $e }}">{{ if $e }}{{ $e }}{{ else }} {{ end }}</option>
+							{{ end }}
+						</select>
+					</li>
+				</ul>
+			</form>
+		</div>
+		<table>
+			<thead>
+				<tr>
+					<th>Switch</th>
+					<th>Building</th>
+					<th>Room</th>
+					<th>Port</th>
+					<th>Vlan</th>
+					<th>Days Inactive</th>
+					<th>Speed</th>
+					<th>Duplex</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				{{ range .Row }}
+				<tr>
+					<td><a href="/campus/switches/ports/?switch={{ .Switch }}">{{ .Switch }}</a></td>
+					<td>{{ .Building }}</td>
+					<td>{{ .Room }}</td>
+					<td><a href="/campus/ports/port/?device={{ .Switch }}&amp;port={{ .Port }}">{{ .Port }}</a></td>
+					<td><a href="/campus/vlans/vlan/?vlan={{ .Vlan }}">{{ .Vlan }}</a></td>
+					<td>{{ .DaysInactive }}</td>
+					<td>{{ .Speed }}</td>
+					<td>{{ .Duplex }}</td>
+					<td>{{ .Description }}</td>
+				</tr>
+				{{ end }}
+			</tbody>
+		</table>
+		{{ template "common_footer" . }}
+	</body>
+</html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="EN">
+	<head>
+		{{ template "common_meta" . }}
+		<link rel="stylesheet" type="text/css" href="/switch.css">
+	</head>
+	
+	<body>
+		{{ template "common_heading_start" }}
+		{{ template "switch_heading" . }}
+		{{ template "common_heading_end" }}
+		<h2>Diffs on {{ $dev := .Device }}{{ $dev }}</h2>
+		{{ $current := .Current }}
+		{{ if .Dated }}
+		<ol>
+		{{ range .Dated }}
+			<li>
+				<a href="/campus/switches/configs/diff/?switch={{ $dev }}&amp;fromFolder=dated_config_dir&amp;from={{ . }}&amp;toFolder=config_dir&amp;to={{ $current }}">
+					{{ . }} vs current
+				</a>
+			</li>
+		{{ end }}
+		</ol>
+		{{ else }}
+		<p>(no dated snapshots available to diff against)</p>
+		{{ end }}
+		{{ template "common_footer" . }}
+	</body>
+</html>

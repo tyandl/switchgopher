@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="EN">
+	<head>
+		{{ template "common_meta" . }}
+		<link rel="stylesheet" type="text/css" href="/switches.css">
+	</head>
+	
+	<body>
+		{{ template "common_heading_start" }}
+		{{ template "common_heading_end" }}
+		<div class="selection">
+			<form method="GET">
+				<ul>
+					<li>
+						Category
+						<select name="Category" onchange="this.form.submit()">
+							{{ range $e := .Category }}
+							<option value="{{ $e }}">{{ if $e }}{{ $e }}{{ else }} {{ end }}</option>
+							{{ end }}
+						</select>
+					</li>
+				</ul>
+				<ul>
+					<li>
+						Building
+						<select name="Building" onchange="this.form.submit()">
+							{{ range $e := .Building }}
+							<option value="{{ $e }}">{{ if $e }}{{ $e }}{{ else }} {{ end }}</option>
+							{{ end }}
+						</select>
+					</li>
+					<li>
+						Room
+						<select name="Room" onchange="this.form.submit()">
+							{{ range $e := .Room }}
+							<option value="{{ $e }}">{{ if $e }}{{ $e }}{{ else }} {{ end }}</option>
+							{{ end }}
+						</select>
+					</li>
+					<li>
+						Model
+						<select name="ModelNum" onchange="this.form.submit()">
+							{{ range $e := .ModelNum }}
+							<option value="{{ $e }}">{{ if $e }}{{ $e }}{{ else }} {{ end }}</option>
+							{{ end }}
+						</select>
+					</li>
+					<li>
+						Index
+						<select name="Num" onchange="this.form.submit()">
+							{{ range $e := .Num }}
+							<option value="{{ $e }}">{{ if $e }}{{ $e }}{{ else }} {{ end }}</option>
+							{{ end }}
+						</select>
+					</li>
+				</ul>
+			</form>
+		</div>
+
+		<div class="results">
+			<ol>
+				{{ range $e := .Device }}
+				<li><a href="/campus/switches/ports/?switch={{ $e }}">{{ $e }}</a></li>
+				{{ end }}
+			</ol>
+		</div>
+		{{ template "common_footer" . }}
+	</body>
+</html>

@@ -1,0 +1,10 @@
+{{ define "switch_heading" }}
+		<nav>
+			<ul>
+				<li><a href="/campus/switches/ports/?switch={{ .Device }}">Ports</a></li>
+				<li><a href="/campus/switches/info/?switch={{ .Device }}">Info</a></li>
+				<li><a href="/campus/switches/configs/?switch={{ .Device }}">Configs</a></li>
+				<li><a href="/campus/switches/diffs/?switch={{ .Device }}">Diffs</a></li>
+			</ul>
+		</nav>
+{{ end }}

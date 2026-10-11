@@ -1,0 +1,76 @@
+@import url("/_tables.css");
+
+html {
+	margin: 0;
+	padding: 0;
+	background-color: #d0e4fe;
+	font-family: 'PT Sans',arial,serif;
+}
+
+body {
+	background-color: #fff;
+	border: 1px solid #dedede;
+	border-radius: 4px;
+	box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.055);
+	color: #888;
+	display: block;
+	margin: 8px 22px 8px 22px;
+	width: 90%; 
+	min-width: 750px;
+}
+
+
+p {
+	margin: 0;
+	padding: 5px 24px;
+	text-indent : 24px;
+	max-width: 450px
+}
+
+nav ul {
+	margin: 0;
+	padding: 0;
+}
+
+nav ul li {
+	display: inline-block;
+	list-style-type: none;
+}
+
+
+nav > ul > li > a {
+	color: #aaa;
+	display: block;
+	line-height: 56px;
+	padding: 0 24px;
+	text-decoration: none;
+}
+
+nav > ul > li:hover {
+	background-color: rgb( 40, 44, 47 );
+}
+
+nav > ul > li:hover > a {
+	color: rgb( 255, 255, 255 );
+}
+
+nav > ul > li > form {
+	background: #eaf8fc;
+	border-radius: 4px;
+	border: 1px solid #dedede;
+	border-color: #c4d9df #a4c3ca #83afb7;
+}
+
+.line {
+	width: 670px;
+	text-align: right;
+}
+
+/*Setting the properties for the foot explicitly here to 
+  prevent accidental overwriting*/
+#foot > p {
+	margin: 0;
+	padding: 5px 24px;
+	text-indent : 24px;
+	max-width: 400px
+}

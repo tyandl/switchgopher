@@ -1,0 +1,23 @@
+# Setup:      for f in buildings categories vlans devices; do cp configuration/$f.example.json configuration/$f.json; done
+#             cp .env.example .env     (fill in the hash and the SNMP credential variables)
+#             ...and edit configuration/*.json for your site
+# Start:      docker compose up -d     (the first start seeds the database)
+# Reload:     docker compose run --rm switchgopher -seed   (after editing configuration/)
+# Needs a .env file containing SWITCHGOPHER_PASSWORD_HASH='<bcrypt hash>' (keep
+# the single quotes - the hash contains $). Make one with:
+#   echo 'yourpassword' | docker compose run --rm -T switchgopher -hash-password 2>/dev/null
+services:
+  switchgopher:
+    build: .
+    image: switchgopher
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file: .env
+    volumes:
+      - data:/data
+      - ./configuration:/app/configuration
+      - configs:/app/resources/configs
+volumes:
+  data:
+  configs:

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="EN">
+	<head>
+		{{ template "common_meta" . }}
+		<link rel="stylesheet" type="text/css" href="/switch.css">
+	</head>
+	
+	<body>
+		{{ template "common_heading_start" }}
+		{{ template "switch_heading" . }}
+		{{ template "common_heading_end" }}
+		<h2>Info on {{ $dev := .Device }}{{ $dev }}</h2>
+		<table>
+			<tbody>
+				{{ range .Row }}
+				<tr>
+					<td>{{ .Label }}</td>
+					<td>{{ .Value }}</td>
+				</tr>
+				{{ end }}
+			</tbody>
+		</table>
+		{{ if .Modules }}
+		{{ range .Modules }}
+		<h2>Module {{ .Module }}</h2>
+		<table>
+			<tbody>
+				{{ range .Row }}
+				<tr>
+					<td>{{ .Label }}</td>
+					<td>{{ .Value }}</td>
+				</tr>
+				{{ end }}
+			</tbody>
+		</table>
+		{{ end }}
+		{{ end }}
+		{{ template "common_footer" . }}
+	</body>
+</html>

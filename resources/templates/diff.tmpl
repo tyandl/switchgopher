@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="EN">
+	<head>
+		{{ template "common_meta" . }}
+		<link rel="stylesheet" type="text/css" href="/switch.css"/>
+		<link rel="stylesheet" type="text/css" href="/config.css"/>
+	</head>
+
+	<body>
+		{{ template "common_heading_start" }}
+		{{ template "switch_heading" . }}
+		{{ template "common_heading_end" }}
+		<h2>Diff on {{ .Device }}</h2>
+		{{ if .Unavailable }}
+		<p>(diff not available - one or both configuration files could not be read)</p>
+		{{ else }}
+		<div class="file">
+			<code>
+				{{ range .Lines }}{{ if eq .Kind "add" }}+{{ else if eq .Kind "remove" }}-{{ else }} {{ end }}{{ .Text }}
+				{{ end }}
+			</code>
+		</div>
+		{{ end }}
+		{{ template "common_footer" . }}
+	</body>
+</html>

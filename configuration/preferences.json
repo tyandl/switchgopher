@@ -1,0 +1,54 @@
+{
+	"config_dir": {
+		"description": "Directory holding the current saved config of each device, as <Category>/<Device>.txt; required: false, type: string, default: resources/configs/",
+		"value": "resources/configs/"
+	},
+	"dated_config_dir": {
+		"description": "Directory holding dated config snapshots used by the Configs and Diffs tabs; required: false, type: string, default: resources/configs/dated/",
+		"value": "resources/configs/dated/"
+	},
+	"poll_interval_seconds": {
+		"description": "How often each switch is polled over SNMP, in seconds; required: false, type: int, default: 300",
+		"value": 300
+	},
+	"poll_timeout_seconds": {
+		"description": "How long to wait for a switch to answer an SNMP poll, in seconds; required: false, type: int, default: 10",
+		"value": 10
+	},
+	"poll_concurrency": {
+		"description": "How many switches are polled at the same time; required: false, type: int, default: 10",
+		"value": 10
+	},
+	"prune_interval_hours": {
+		"description": "How often old device sightings are pruned, in hours; required: false, type: int, default: 24",
+		"value": 24
+	},
+	"node_retention_days": {
+		"description": "How long device sightings on ports are kept before being pruned, in days; required: false, type: int, default: 90",
+		"value": 90
+	},
+	"node_max_per_mac": {
+		"description": "The most sightings kept per MAC address; required: false, type: int, default: 10",
+		"value": 10
+	},
+	"arp_poll_interval_seconds": {
+		"description": "How often routers' ARP tables are polled to learn each node's IP address, in seconds; required: false, type: int, default: 300",
+		"value": 300
+	},
+	"dns_concurrency": {
+		"description": "How many reverse-DNS lookups (node hostnames) run at the same time; required: false, type: int, default: 20",
+		"value": 20
+	},
+	"dns_lookup_timeout_seconds": {
+		"description": "How long to wait for each reverse-DNS lookup before giving up, in seconds; required: false, type: int, default: 3",
+		"value": 3
+	},
+	"dns_domain_suffix": {
+		"description": "Domain suffix removed from resolved hostnames, so host1.example.com shows as host1; empty leaves hostnames as returned; required: false, type: string, default: (empty)",
+		"value": ""
+	},
+	"unused_after_days": {
+		"description": "A port with no activity for this many days is listed on the Unused page, in days; required: false, type: int, default: 60",
+		"value": 60
+	}
+}

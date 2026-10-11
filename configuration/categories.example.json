@@ -1,0 +1,15 @@
+{
+	"Notes": [
+		"Copy to categories.json and edit; the real file is gitignored.",
+		"A category groups devices. It is also the folder name for saved configs: resources/configs/<Category>/<Device>.txt.",
+		"Notes is ignored by the app. Delete it freely."
+	],
+	"Categories":[
+		{
+			"Category":"Core"
+		},
+		{
+			"Category":"Access"
+		}
+	]
+}

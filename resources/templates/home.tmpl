@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="EN">
+	<head>
+		{{ template "common_meta" . }}
+		<link rel="stylesheet" type="text/css" href="/home.css">
+	</head>
+	
+	<body>
+		{{ template "common_heading_start" }}
+		<h1>SwitchGopher</h1>
+		{{ template "common_heading_end" }}
+		<blockquote>
+			go·fer<br>
+			/ˈgōfər/<br>
+			nouninformal<br>
+			1. a person who runs errands, esp. on a movie set or in an office.
+		</blockquote>
+		<div class="line"><hr></div>
+	
+		<p>
+			SwitchGopher keeps track of what is plugged into your network. It polls
+			your switches over SNMP on a regular schedule and records each port's
+			state, speed, VLAN and power draw, along with the devices seen on it:
+			their MAC addresses, IP addresses and hostnames. Use the Devices page to
+			browse switches by category, building or room, or search for a MAC address
+			or hostname to find out where something is connected.
+		</p>
+
+		<p>
+			The Vlans page shows how each VLAN is used, Stats gives network-wide totals,
+			and Unused lists ports that have sat idle long enough to be reclaimed.
+			SwitchGopher is a Go rewrite of the classic Perl tool switchmap. It only
+			reads from your network and never changes a switch. New here? The Help page
+			explains each page and how to read a switch's port table.
+		</p>
+		<br>
+		<p>Happy switching!</p>
+		<br>
+		{{ template "common_footer" . }}
+	</body>
+</html>

@@ -1,0 +1,39 @@
+{
+	"Notes": [
+		"Copy to devices.json and edit; the real file is gitignored.",
+		"Required: Device, Category, Building, Room, Address (host or host:port). Model and Index are the model and unit number from the device name. IsRouter true also polls the device's ARP table to learn node IP addresses.",
+		"Building and Category should match entries in buildings.json and categories.json.",
+		"SNMPv2c (the default) uses Community. For SNMPv3 set SnmpVersion to \"3\" plus Username, SecurityLevel (noAuthNoPriv, authNoPriv, authPriv), AuthProtocol (MD5, SHA, SHA224, SHA256, SHA384, SHA512), AuthPassphrase, PrivProtocol (DES, AES, AES192, AES256, AES192C, AES256C), PrivPassphrase, and optionally ContextName.",
+		"Credential placeholders: Community, Username, AuthPassphrase and PrivPassphrase may be written as ${NAME}, like the entries below. The database stores the placeholder as written, and the value is read from the environment variable NAME every time the device is polled. If NAME is unset or empty, that device's poll fails with an error naming the variable. Write $${ for a literal ${. Plain values still work but are stored in plaintext.",
+		"Notes is ignored by the app. Delete it freely."
+	],
+	"Devices":[
+		{
+			"Device":"HQ-R1-3560-01",
+			"Category":"Core",
+			"Building":"Headquarters",
+			"Room":"R1",
+			"Model":"3560",
+			"Index":"01",
+			"Address":"192.0.2.10",
+			"Community":"${CORE_COMMUNITY}",
+			"IsRouter":true
+		},
+		{
+			"Device":"LAB-R2-2960-01",
+			"Category":"Access",
+			"Building":"Lab Building",
+			"Room":"R2",
+			"Model":"2960",
+			"Index":"01",
+			"Address":"192.0.2.11",
+			"SnmpVersion":"3",
+			"Username":"monitor",
+			"SecurityLevel":"authPriv",
+			"AuthProtocol":"SHA",
+			"AuthPassphrase":"${LAB_AUTH_PASS}",
+			"PrivProtocol":"AES",
+			"PrivPassphrase":"${LAB_PRIV_PASS}"
+		}
+	]
+}

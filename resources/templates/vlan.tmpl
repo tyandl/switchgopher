@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="EN">
+	<head>
+		{{ template "common_meta" . }}
+		<link rel="stylesheet" type="text/css" href="/vlans.css"/>
+	</head>
+
+	<body>
+		{{ template "common_heading_start" }}
+		{{ template "common_heading_end" }}
+		<h2>Vlan {{ .Vlan }}</h2>
+		<table>
+			<tbody>
+				{{ range .Row }}
+				<tr>
+					<td>{{ .Label }}</td>
+					<td>{{ .Value }}</td>
+				</tr>
+				{{ end }}
+			</tbody>
+		</table>
+		<h2>Members</h2>
+		{{ if .Members }}
+		<table>
+			<thead>
+				<tr>
+					<th>Device</th>
+					<th>Port</th>
+					<th>Role</th>
+					<th>State</th>
+					<th>Speed</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				{{ range .Members }}
+				<tr>
+					<td><a href="/campus/switches/ports/?switch={{ .Device }}">{{ .Device }}</a></td>
+					<td><a href="/campus/ports/port/?device={{ .Device }}&amp;port={{ .Port }}">{{ .Port }}</a></td>
+					<td>{{ .Role }}</td>
+					<td>{{ .State }}</td>
+					<td>{{ .Speed }}</td>
+					<td>{{ .Description }}</td>
+				</tr>
+				{{ end }}
+			</tbody>
+		</table>
+		{{ else }}
+		<p>(no ports currently assigned to this vlan)</p>
+		{{ end }}
+		{{ template "common_footer" . }}
+	</body>
+</html>

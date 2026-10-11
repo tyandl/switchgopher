@@ -1,0 +1,38 @@
+.selection ul {
+	display: inline-block;
+	margin: 0;
+	padding: 0px 12px;
+}
+
+.selection ul li {
+	display: inline-block;
+	list-style-type: none;
+}
+
+select {
+	width: 75px;
+}
+
+p {
+	margin: 0;
+	padding: 0px;
+	text-indent : 0px;
+}
+
+.results {
+	min-height: 400px;
+}
+
+.results > ol{
+	list-style-type: decimal;
+	list-style-position:inside;
+	column-fill: auto;
+	-webkit-column-count: 4;
+	-moz-column-count: 4;
+	-o-column-count: 4;
+	column-count: 4;
+}
+
+.results > ol li {
+	padding:0px; margin:0px;
+}

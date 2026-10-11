@@ -1,0 +1,13 @@
+/switchgopher
+*.pid
+inventory.sqlite.bak
+.env
+resources/inventory.sqlite
+resources/inventory.sqlite-wal
+resources/inventory.sqlite-shm
+resources/inventory.sqlite-journal
+configuration/buildings.json
+configuration/categories.json
+configuration/vlans.json
+configuration/devices.json
+configuration/discovered-*.json

@@ -1,0 +1,15 @@
+.git
+.gitignore
+*.pid
+*.bak
+/switchgopher
+resources/inventory.sqlite
+resources/configs/dated/*
+documentation
+testdata
+.env
+configuration/buildings.json
+configuration/categories.json
+configuration/vlans.json
+configuration/devices.json
+configuration/discovered-*.json

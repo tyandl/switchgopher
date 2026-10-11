@@ -1,0 +1,19 @@
+{
+	"Notes": [
+		"Copy to buildings.json and edit; the real file is gitignored.",
+		"Building is the full name, ShortName is the code used in device names (for example HQ in HQ-R1-3560-01), and Description is optional.",
+		"Notes is ignored by the app. Delete it freely."
+	],
+	"Buildings":[
+		{
+			"Building":"Headquarters",
+			"ShortName":"HQ",
+			"Description":"Main office"
+		},
+		{
+			"Building":"Lab Building",
+			"ShortName":"LAB",
+			"Description":"Test lab"
+		}
+	]
+}

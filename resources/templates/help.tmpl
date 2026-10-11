@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="EN">
+	<head>
+		{{ template "common_meta" . }}
+	</head>
+
+	<body>
+		{{ template "common_heading_start" }}
+		{{ template "common_heading_end" }}
+
+		<h2>Help</h2>
+		<p>
+			SwitchGopher polls your network switches over SNMP and shows what is
+			plugged into each port. Everything here is read-only: the pages report
+			what the switches said the last time they were polled.
+		</p>
+		<ul>
+			<li><a href="#finding">Finding things</a></li>
+			<li><a href="#pages">The pages</a></li>
+			<li><a href="#switch">Inside a switch</a></li>
+			<li><a href="#data">Where the data comes from</a></li>
+			<li><a href="#faq">Questions and gotchas</a></li>
+		</ul>
+
+		<h2 id="finding">Finding things</h2>
+		<ul>
+			<li><b>Know the switch?</b> Open <a href="/campus/switches/">Devices</a> and pick it from the list. Narrow the list with the Category, Building, Room, Model and Number drop-downs; each one applies as soon as you choose it.</li>
+			<li><b>Know a MAC address or hostname?</b> Type part of it into the search box in the menu bar and press GO. Search matches any part of a MAC address or hostname, and lists where it was seen: the date, switch, port, CDP neighbor, IP and host.</li>
+			<li><b>Looking for a VLAN?</b> Open <a href="/campus/vlans/">Vlans</a> and click the VLAN number.</li>
+			<li><b>Want a free port?</b> Open <a href="/campus/unused/">Unused</a>.</li>
+		</ul>
+
+		<h2 id="pages">The pages</h2>
+		<p><b><a href="/campus/home/">Home</a></b> is the landing page.</p>
+		<p>
+			<b><a href="/campus/switches/">Devices</a></b> lists every switch, filtered
+			by the drop-downs at the top. Click a switch to see its ports.
+		</p>
+		<p>
+			<b><a href="/campus/vlans/">Vlans</a></b> lists each VLAN with its name,
+			subnet, how many devices and ports use it, and its utilization. Sort by
+			VLAN number or name, and tick "Show unused vlans" to include VLANs that no
+			port currently uses. Click a VLAN to see which ports belong to it.
+		</p>
+		<p>
+			<b><a href="/campus/stats/">Stats</a></b> gives network-wide totals: switch
+			and module counts by model, ports by state, trunk, EtherChannel and IP
+			phone port counts, and a per-switch breakdown of active, inactive and
+			disabled ports.
+		</p>
+		<p>
+			<b><a href="/campus/unused/">Unused</a></b> lists ports that have been
+			inactive for longer than the configured threshold (60 days by default),
+			with how many days each has been idle. Filter by building, room or
+			switch.
+		</p>
+		<p><b>Logout</b> (top right) ends your session.</p>
+
+		<h2 id="switch">Inside a switch</h2>
+		<p>Opening a switch gives you four tabs:</p>
+		<ul>
+			<li><b>Ports</b> &ndash; one row per port, described below.</li>
+			<li><b>Info</b> &ndash; model, firmware, location, contact, address, uptime and, for chassis switches, the installed modules.</li>
+			<li><b>Configs</b> &ndash; saved copies of the switch's configuration, if any have been provided.</li>
+			<li><b>Diffs</b> &ndash; what changed between saved configurations.</li>
+		</ul>
+
+		<h2>Reading the Ports table</h2>
+		<p>The left half describes the port; the right half describes what is plugged into it.</p>
+		<ul>
+			<li><b>Port</b> &ndash; the interface number. Click it for the port's detail page, including traffic and error counters.</li>
+			<li><b>Vlan / Aux</b> &ndash; the data VLAN, and the voice (auxiliary) VLAN if one is set.</li>
+			<li><b>Mode</b> &ndash; Access (one VLAN, normally an end device) or Trunk (carries many VLANs, normally another switch).</li>
+			<li><b>State</b> &ndash; whether the link is up right now. <b>Admin State</b> is whether someone has switched the port on or off in the configuration; a disabled port is always down.</li>
+			<li><b>Since</b> &ndash; when the port last changed state.</li>
+			<li><b>Speed / Duplex</b> &ndash; the negotiated link speed and duplex.</li>
+			<li><b>PoE</b> &ndash; whether the port is delivering Power over Ethernet, and its power class.</li>
+			<li><b>Aggregate</b> &ndash; the EtherChannel (link bundle) the port belongs to. A second table below the ports lists each bundle's members.</li>
+			<li><b>Description</b> &ndash; the label configured on the port.</li>
+			<li><b>CDP</b> &ndash; the neighbor device Cisco Discovery Protocol reported on this port, usually another switch or an access point.</li>
+			<li><b>NIC / MAC / IP / Host</b> &ndash; the device seen on the port: its network-card vendor (from the MAC address), MAC, IP address and hostname.</li>
+		</ul>
+
+		<h2 id="data">Where the data comes from</h2>
+		<ul>
+			<li><b>Switches</b> are polled over SNMP on a schedule (every 5 minutes by default), so a page can be a few minutes behind reality.</li>
+			<li><b>IP addresses</b> come from a router's ARP table and <b>hostnames</b> from reverse DNS, so either can be blank for a device the router has not seen recently.</li>
+			<li><b>Sightings</b> of devices on ports are kept for 90 days by default, then removed.</li>
+			<li><b>Buildings, rooms, categories and VLAN subnets</b> come from the site's configuration files, not from SNMP, since switches cannot report them.</li>
+		</ul>
+
+		<h2 id="faq">Questions and gotchas</h2>
+		<p><b>A port shows no MAC address, but I know something is plugged in.</b>
+			The switch only learns a MAC address when the device sends traffic.
+			A quiet device, or one the switch has aged out, will show up blank.</p>
+		<p><b>A port shows several MAC addresses.</b>
+			The port probably leads to another switch, a hub, a VoIP phone with a PC
+			behind it, or a virtualization host. Trunk ports usually show many.</p>
+		<p><b>A switch is missing from Devices.</b>
+			Devices are added by an administrator through the configuration files.
+			Ask them to add it.</p>
+		<p><b>The Configs and Diffs tabs say "not available".</b>
+			SwitchGopher does not collect configurations itself yet. They appear once
+			someone drops saved copies into the configuration folder.</p>
+		<p><b>A port's numbers look wrong or a column is empty.</b>
+			Not every switch reports every value (PoE, aggregation and counters vary
+			by model and firmware). A blank means the switch did not report it.</p>
+		<p><b>I was sent back to the login page.</b>
+			Sessions last 12 hours and end whenever the server restarts. Log in again.</p>
+
+		{{ template "common_footer" . }}
+	</body>
+</html>

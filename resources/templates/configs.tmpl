@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="EN">
+	<head>
+		{{ template "common_meta" . }}
+		<link rel="stylesheet" type="text/css" href="/switch.css">
+		<link rel="stylesheet" type="text/css" href="/config.css">
+	</head>
+	
+	<body>
+		{{ template "common_heading_start" }}
+		{{ template "switch_heading" . }}
+		{{ template "common_heading_end" }}
+		<h2>Configurations on {{ $dev := .Device }}{{ $dev }}</h2>
+		<p>Current:
+			<a href="/campus/switches/configs/config/?switch={{ $dev }}&amp;folder=config_dir&amp;file={{ .Current }}">
+				{{ .Current }}
+			</a>
+		</p>
+		
+		<ol>
+		{{ range .Dated }}
+			<li>
+				<a href="/campus/switches/configs/config/?switch={{ $dev }}&amp;folder=dated_config_dir&amp;file={{ . }}">
+					{{ . }}
+				</a>
+			</li>
+		{{ end }}
+		</ol>
+		{{ template "common_footer" . }}
+	</body>
+</html>

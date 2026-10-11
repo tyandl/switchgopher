@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="EN">
+	<head>
+		{{ template "common_meta" . }}
+		<link rel="stylesheet" type="text/css" href="/switch.css"/>
+	</head>
+	
+	<body>
+		{{ template "common_heading_start" }}
+		{{ template "switch_heading" . }}
+		{{ template "common_heading_end" }}
+		<h2>Ports on {{ $dev := .Device }}{{ $dev }}</h2>
+		<table>
+			<colgroup class="port">
+				<col span="12"/>
+			</colgroup>
+			<colgroup class="node">
+				<col span="5"/>
+			</colgroup>
+			<thead>
+				<tr>
+					<th colspan="12">Port Info</th>
+					<th colspan="5">Node Info</th>
+				</tr>
+				<tr>
+					<th>Port</th>
+					<th>Vlan</th>
+					<th>Aux</th>
+					<th>Mode</th>
+					<th>State</th>
+					<th>Admin State</th>
+					<th>Since</th>
+					<th>Speed</th>
+					<th>Duplex</th>
+					<th>PoE</th>
+					<th>Aggregate</th>
+					<th>Description</th>
+					<th>CDP</th>
+					<th>NIC</th>
+					<th>MAC</th>
+					<th>IP</th>
+					<th>Host</th>
+				</tr>
+			</thead>
+			<tbody>
+				{{ range .Row }}
+				<tr>
+					<td{{ if .Nodes }} rowspan="{{ len .Nodes }}"{{end}}><a href="/campus/ports/port/?device={{ $dev }}&amp;port={{ .Port }}">{{ .Port }}</a></td>
+					<td{{ if .Nodes }} rowspan="{{ len .Nodes }}"{{end}}><a href="/campus/vlans/vlan/?vlan={{ .Vlan }}">{{ .Vlan }}</a></td>
+					<td{{ if .Nodes }} rowspan="{{ len .Nodes }}"{{end}}><a href="/campus/vlans/vlan/?vlan={{ .Aux }}">{{ .Aux }}</a></td>
+					<td{{ if .Nodes }} rowspan="{{ len .Nodes }}"{{end}}>{{ .Mode }}</td>
+					<td{{ if .Nodes }} rowspan="{{ len .Nodes }}"{{end}}>{{ .State }}</td>
+					<td{{ if .Nodes }} rowspan="{{ len .Nodes }}"{{end}}>{{ .AdminState }}</td>
+					<td{{ if .Nodes }} rowspan="{{ len .Nodes }}"{{end}}>{{ .Since }}</td>
+					<td{{ if .Nodes }} rowspan="{{ len .Nodes }}"{{end}}>{{ .Speed }}</td>
+					<td{{ if .Nodes }} rowspan="{{ len .Nodes }}"{{end}}>{{ .Duplex }}</td>
+					<td{{ if .Nodes }} rowspan="{{ len .Nodes }}"{{end}}>{{ .PoE }}</td>
+					<td{{ if .Nodes }} rowspan="{{ len .Nodes }}"{{end}}>{{ if .Aggregate }}<a href="/campus/ports/port/?device={{ $dev }}&amp;port={{ .Aggregate }}">{{ .Aggregate }}</a>{{ end }}</td>
+					<td{{ if .Nodes }} rowspan="{{ len .Nodes }}"{{end}}>{{ .Description }}</td>
+					{{ range $i, $e := .Nodes }}
+					{{ if ne $i 0 }}<tr>{{ end }}
+					<td>{{ .CDP }}</td>
+					<td>{{ .NIC }}</td>
+					<td><a href="/campus/ports/node/?mac={{ .Mac }}">{{ .Mac }}</a></td>
+					<td>{{ .IP }}</td>
+					<td>{{ .Host }}</td>
+					</tr>
+					{{ end }}
+				{{ end }}
+			</tbody>
+		</table>
+		{{ if .Aggregates }}
+		<h2>Aggregates</h2>
+		<table>
+			<thead>
+				<tr>
+					<th>Port</th>
+					<th>Members</th>
+				</tr>
+			</thead>
+			<tbody>
+				{{ range .Aggregates }}
+				<tr>
+					<td><a href="/campus/ports/port/?device={{ $dev }}&amp;port={{ .Port }}">{{ .Port }}</a></td>
+					<td>
+						{{ range $i, $m := .Members }}{{ if $i }}, {{ end }}<a href="/campus/ports/port/?device={{ $dev }}&amp;port={{ $m }}">{{ $m }}</a>{{ end }}
+					</td>
+				</tr>
+				{{ end }}
+			</tbody>
+		</table>
+		{{ end }}
+		{{ template "common_footer" . }}
+	</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="EN">
+	<head>
+		{{ template "common_meta" . }}
+	</head>
+	
+	<body>
+		{{ template "common_heading_start" }}
+		{{ template "common_heading_end" }}
+		<h2>History for {{ .Mac }}</h2>
+		<table>
+			<thead>
+				<tr>
+					<th>Date</th>
+					<th>CDP</th>
+					<th>NIC</th>
+					<th>MAC</th>
+					<th>IP</th>
+					<th>Host</th>
+				</tr>
+			</thead>
+			<tbody>
+				{{ range .Row }}
+				<tr>
+					<td>{{ .Date }}</td>
+					<td>{{ .CDP }}</td>
+					<td>{{ .NIC }}</td>
+					<td>{{ .Mac }}</td>
+					<td>{{ .IP }}</td>
+					<td>{{ .Host }}</td>
+				</tr>
+				{{ end }}
+			</tbody>
+		</table>
+		{{ template "common_footer" . }}
+	</body>
+</html>

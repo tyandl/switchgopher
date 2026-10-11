@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="EN">
+	<head>
+		{{ template "common_meta" . }}
+		<link rel="stylesheet" type="text/css" href="/stats.css"/>
+	</head>
+
+	<body>
+		{{ template "common_heading_start" }}
+		{{ template "common_heading_end" }}
+
+		<h2>Switches</h2>
+		<table>
+			<thead>
+				<tr><th>Count</th><th>Model</th></tr>
+			</thead>
+			<tbody>
+				{{ range .Switches }}
+				<tr><td>{{ .Count }}</td><td>{{ .Model }}</td></tr>
+				{{ end }}
+				<tr><td>{{ .TotalSwitches }}</td><td><b>Total</b></td></tr>
+			</tbody>
+		</table>
+
+		{{ if .Modules }}
+		<h2>Modules</h2>
+		<table>
+			<thead>
+				<tr><th>Count</th><th>Model</th><th>Description</th></tr>
+			</thead>
+			<tbody>
+				{{ range .Modules }}
+				<tr><td>{{ .Count }}</td><td>{{ .Model }}</td><td>{{ .Description }}</td></tr>
+				{{ end }}
+				<tr><td>{{ .TotalModules }}</td><td colspan="2"><b>Total</b></td></tr>
+			</tbody>
+		</table>
+		{{ end }}
+
+		<h2>Port by State</h2>
+		<table>
+			<thead>
+				<tr><th></th><th>virtual</th><th>non-virtual</th></tr>
+			</thead>
+			<tbody>
+				<tr><td>active</td><td>{{ .PortStates.ActiveVirtual }}</td><td>{{ .PortStates.Active }}</td></tr>
+				<tr><td>inactive</td><td>{{ .PortStates.InactiveVirtual }}</td><td>{{ .PortStates.Inactive }}</td></tr>
+				<tr><td>disabled</td><td>{{ .PortStates.DisabledVirtual }}</td><td>{{ .PortStates.Disabled }}</td></tr>
+				<tr><td><b>Total</b></td><td>{{ .PortStates.TotalVirtual }}</td><td>{{ .PortStates.TotalNonVirtual }}</td></tr>
+				{{ if .PortStates.Unknown }}
+				<tr><td>unknown</td><td colspan="2">{{ .PortStates.Unknown }}</td></tr>
+				{{ end }}
+			</tbody>
+		</table>
+
+		<h2>Port Types</h2>
+		<table>
+			<thead>
+				<tr><th>Count</th><th>What</th></tr>
+			</thead>
+			<tbody>
+				<tr><td>{{ .PortTypes.AuxVlan }}</td><td>ports with a defined auxiliary VLAN</td></tr>
+				<tr><td>{{ .PortTypes.IPPhone }}</td><td>ports connected to an IP phone</td></tr>
+				<tr><td>{{ .PortTypes.Trunk }}</td><td>trunk ports</td></tr>
+				<tr><td>{{ .PortTypes.EtherChannel }}</td><td>EtherChannel member ports</td></tr>
+			</tbody>
+		</table>
+
+		<h2>VLANs</h2>
+		<table>
+			<tbody>
+				<tr><td>{{ .VlanCount }}</td><td>VLANs in use</td></tr>
+			</tbody>
+		</table>
+
+		<h2>Unique IP Addresses</h2>
+		<table>
+			<tbody>
+				<tr><td>{{ .IpCount }}</td></tr>
+			</tbody>
+		</table>
+
+		<h2>Switch Details</h2>
+		<table>
+			<thead>
+				<tr><th>Switch</th><th>active</th><th>inactive</th><th>disabled</th><th>total</th></tr>
+			</thead>
+			<tbody>
+				{{ range .SwitchDetails }}
+				<tr>
+					<td><a href="/campus/switches/ports/?switch={{ .Device }}">{{ .Device }}</a></td>
+					<td>{{ .Active }}</td>
+					<td>{{ .Inactive }}</td>
+					<td>{{ .Disabled }}</td>
+					<td>{{ .Total }}</td>
+				</tr>
+				{{ end }}
+				<tr>
+					<td><b>{{ .GrandTotal.Device }}</b></td>
+					<td>{{ .GrandTotal.Active }}</td>
+					<td>{{ .GrandTotal.Inactive }}</td>
+					<td>{{ .GrandTotal.Disabled }}</td>
+					<td>{{ .GrandTotal.Total }}</td>
+				</tr>
+			</tbody>
+		</table>
+
+		{{ template "common_footer" . }}
+	</body>
+</html>

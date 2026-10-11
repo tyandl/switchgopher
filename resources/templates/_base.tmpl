@@ -1,0 +1,44 @@
+{{ define "common_meta" }}
+		<meta name="Application-name" content="SwitchGopher"/>
+		<meta name="Author" content="Timothy Yandl"/>
+		<meta name="Description" content="Gathers, stores, and displays information on network devices"/>
+		<meta name="Generator" content="SwitchGopher {{ .Version }}"/>
+		<meta name="Keywords" content="network, switchmap, snmp, management, switch, router"/>
+		
+		<meta charset="UTF-8"/>
+		
+
+		<!--[if IE]><meta http-equiv="refresh" content="0;URL=http://www.example.com/"><![endif]-->
+		<link rel="stylesheet" type="text/css" href="/base.css"/>
+		<title>SwitchGopher - {{ .Title }}</title>
+{{ end }}
+
+{{ define "common_heading_start" }}
+		<nav>
+			<ul>
+				<li><a href="/campus/home/">Home</a></li>
+				<li><a href="/campus/switches/">Devices</a></li>
+				<li><a href="/campus/vlans/">Vlans</a></li>
+				<li><a href="/campus/stats/">Stats</a></li>
+				<li><a href="/campus/unused/">Unused</a></li>
+				<li><a href="/campus/help/">Help</a></li>
+				<li>
+					<form action="/campus/search/" method="GET">
+						<input type="search" name="search">
+						<input type="submit" value="GO">
+					</form>
+				</li>
+			</ul>
+		</nav>
+{{ end }}
+
+{{ define "common_heading_end" }}
+		<div class="line"><a href="/logout/">Logout</a><hr></div>
+{{ end }}
+
+{{ define "common_footer" }}
+		<div id="foot">
+			<div class="line"><hr></div>
+			<p> SwitchGopher {{ .Version }} © Timothy Yandl</p>
+		</div>
+{{ end }}

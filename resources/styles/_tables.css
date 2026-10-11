@@ -1,0 +1,18 @@
+h2 {
+	margin: 0px;
+	padding: 12px 24px;
+}
+
+table {
+	border-collapse: collapse;
+	margin: 0px 24px;
+	padding: 0px;
+}
+
+th, td {
+	padding: 5px;
+}
+
+table, td, th {
+	border: 1px solid black;
+}

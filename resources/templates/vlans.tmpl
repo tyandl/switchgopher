@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="EN">
+	<head>
+		{{ template "common_meta" . }}
+		<link rel="stylesheet" type="text/css" href="/vlans.css">
+	</head>
+	
+	<body>
+		{{ template "common_heading_start" }}
+		{{ template "common_heading_end" }}
+
+		<h2>Vlans</h2>
+		<form method="GET">
+			<ul>
+				<li>
+					Sort by
+					<select name="sort" onchange="this.form.submit()">
+						<option value="Vlan" {{ if eq .Sort "Vlan" }}selected{{ end }}>Vlan</option>
+						<option value="Name" {{ if eq .Sort "Name" }}selected{{ end }}>Name</option>
+					</select>
+				</li>
+				<li>
+					<input type="hidden" name="unused" value="0">
+					<input type="checkbox" id="unused" name="unused" value="1" {{ if .ShowUnused }}checked{{ end }} onchange="this.form.submit()">
+					<label for="unused">Show unused vlans</label>
+				</li>
+			</ul>
+		</form>
+		<table>
+			<thead>
+				<tr>
+					<th>Vlan</th>
+					<th>Name</th>
+					<th>Subnet</th>
+					<th># Devices</th>
+					<th># Ports</th>
+					<th>% Utilization</th>
+				</tr>
+			</thead>
+			<tbody>
+				{{ range .Vlans }}
+				<tr>
+					<td><a href="/campus/vlans/vlan/?vlan={{ .Vlan }}">{{ .Vlan }}</a></td>
+					<td>{{ .Name }}</td>
+					<td>{{ .Subnet }}</td>
+					<td>{{ .Switches }}</td>
+					<td>{{ .Ports }}</td>
+					<td>{{ .Utilization }}</td>
+				</tr>
+				{{ end }}
+			</tbody>
+		</table>
+		{{ template "common_footer" . }}
+	</body>
+</html>

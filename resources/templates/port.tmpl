@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="EN">
+	<head>
+		{{ template "common_meta" . }}
+		<link rel="stylesheet" type="text/css" href="/switch.css"/>
+	</head>
+
+	<body>
+		{{ template "common_heading_start" }}
+		{{ template "switch_heading" . }}
+		{{ template "common_heading_end" }}
+		<h2>Port {{ .Port }} on {{ .Device }}</h2>
+		<table>
+			<tbody>
+				<tr>
+					<td>Vlan</td>
+					<td><a href="/campus/vlans/vlan/?vlan={{ .Vlan }}">{{ .Vlan }}</a></td>
+				</tr>
+				<tr>
+					<td>Aux Vlan</td>
+					<td><a href="/campus/vlans/vlan/?vlan={{ .AuxVlan }}">{{ .AuxVlan }}</a></td>
+				</tr>
+				{{ range .Row }}
+				<tr>
+					<td>{{ .Label }}</td>
+					<td>{{ .Value }}</td>
+				</tr>
+				{{ end }}
+			</tbody>
+		</table>
+		<h2>Counters</h2>
+		<table>
+			<thead>
+				<tr>
+					<th>Metric</th>
+					<th>In</th>
+					<th>Out</th>
+				</tr>
+			</thead>
+			<tbody>
+				{{ range .Counters }}
+				<tr>
+					<td>{{ .Metric }}</td>
+					<td>{{ .In }}</td>
+					<td>{{ .Out }}</td>
+				</tr>
+				{{ end }}
+			</tbody>
+		</table>
+		<h2>History</h2>
+		<table>
+			<thead>
+				<tr>
+					<th>Date</th>
+					<th>CDP</th>
+					<th>NIC</th>
+					<th>MAC</th>
+					<th>IP</th>
+					<th>Host</th>
+				</tr>
+			</thead>
+			<tbody>
+				{{ range .History }}
+				<tr>
+					<td>{{ .Date }}</td>
+					<td>{{ .CDP }}</td>
+					<td>{{ .NIC }}</td>
+					<td>{{ .Mac }}</td>
+					<td>{{ .IP }}</td>
+					<td>{{ .Host }}</td>
+				</tr>
+				{{ end }}
+			</tbody>
+		</table>
+		{{ template "common_footer" . }}
+	</body>
+</html>
