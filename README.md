@@ -405,3 +405,7 @@ Documentation for contributors:
 
 Not yet validated against real Cisco hardware, only a local net-snmp
 simulator and unit tests.
+
+## License
+
+MIT. See [`LICENSE`](LICENSE).
