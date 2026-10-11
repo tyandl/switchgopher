@@ -170,6 +170,23 @@ Login is one shared username and password. A signed cookie (`auth.go`) holds an
 expiry time; the signing key is random per process, so a restart logs everyone
 out. See the README for how to set the password hash.
 
+## Logging
+
+Everything logs through `log/slog`, set up once in `main.go` by
+`internal/logging` (level and text/JSON format come from `-log-level` and
+`-log-format`, or the `SWITCHGOPHER_LOG_*` environment variables). The levels
+and what belongs at each are documented in that package. Things worth knowing:
+
+- The poller logs one `poll cycle complete` line per cycle with counts, and a
+  `device poll failed` warning per failing device, so you can tell at a glance
+  whether polling is healthy.
+- Every web request gets an ID (`requestID`, `router.go`) that appears in its
+  log lines and the `X-Request-ID` header. Requests are logged at Debug by
+  `requestLogger`; page handlers that fail call `internalError`, which logs the
+  real error and gives the browser a generic 500 quoting that ID.
+- Code that only returns errors (`store`, `config`) does not log them; the caller
+  that handles the error decides the level.
+
 ## Configuration
 
 | File | Used for |

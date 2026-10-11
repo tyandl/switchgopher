@@ -1246,6 +1246,46 @@ Remaining, not changed:
 - Only Go files have a formatter; the templates, CSS, JSON and Markdown are
   hand-formatted.
 
+## Logging (2026-10, done)
+
+Replaced the standard `log` package (39 prints and 23 fatals, all at one level)
+with `log/slog` from the standard library: no new dependency, structured
+key=value fields, four levels, and a JSON handler for log collectors.
+`internal/logging` sets it up from `-log-level` / `-log-format` or
+`SWITCHGOPHER_LOG_LEVEL` / `SWITCHGOPHER_LOG_FORMAT`; the levels are documented
+there. What changed beyond the mechanical conversion:
+
+- **Gaps filled.** Optional SNMP fetch failures now say which device (`target`);
+  the poller logs a `poll cycle complete` summary and warns when there are no
+  devices; logins succeed or fail visibly (the failed username is not logged);
+  most web 500s were never logged server-side at all and now are, via
+  `internalError`, which also stops returning raw error text (SQL, file paths)
+  to the browser.
+- **Right level for each event.** A device that lacks a feature (no temperature
+  sensor, no STP value) is Debug via `snmp.ErrNotSupported`, not a Warn on every
+  poll. "No implementation registered" is Debug. A single device failing a poll
+  is Warn. Database errors and 500s are Error.
+- **No log-and-return.** `store.Connect`, `store.Setup` and `config.Load` used to
+  log an error and then also return it, so it appeared twice; they now return a
+  wrapped error and the caller logs it once.
+- **Bugs found on the way.** `getDevices` and `getSelection` called
+  `log.Panicln` on a query error (a panic inside a request); they now log and
+  return an empty list. `store.Setup` ignored a row-scan error and never closed
+  its rows.
+- JSON output writes durations as text (`"took":"20ms"`), not nanoseconds.
+- `-help` has a Logging section, and the README has a Logging section.
+
+Request IDs: each web request gets one (`requestID` in `router.go`), carried in
+the log lines, the `X-Request-ID` response header and the "reference:" on a 500
+page. A proxy-supplied ID is reused only if it is a short harmless token, so it
+cannot forge log lines.
+
+Log rotation is not done by the app. `docker-compose.yml` sets the `local`
+logging driver with `max-size 10m` / `max-file 5`, because Docker's default
+(`json-file` with no options) never rotates; the README's "Log rotation"
+section covers daemon-wide settings, collectors and non-Docker setups. Request
+logging is Debug only.
+
 ## Features switchmap has that SwitchGopher doesn't (yet)
 
 - **Cabling/documentation hygiene audits** - `VerifyPortLabels.pm` and

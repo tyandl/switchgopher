@@ -70,8 +70,8 @@ Switches are polled every 5 minutes by default (the first poll starts
 immediately), so pages fill in as polls succeed. The example `devices.json` uses
 `${...}` credential placeholders, so until you set those variables (or replace
 the example devices with your own) the log shows lines like
-`device HQ-R1-3560-01: Community: environment variable CORE_COMMUNITY is not
-set`. That is expected, not a bug; see "SNMP credentials" below. After editing
+`level=WARN msg="device poll failed" device=HQ-R1-3560-01 err="...Community:
+environment variable CORE_COMMUNITY is not set"`. That is expected, not a bug; see "SNMP credentials" below. After editing
 the files in `configuration/`, run `go run ./cmd/switchgopher -seed` to reload
 them (a database that has already been seeded is not re-seeded automatically).
 
@@ -197,18 +197,92 @@ cannot be loaded the server stops with `initMIBs: failed loading <NAME>`.
   also needs a driver; see
   [`internal/snmp/drivers/README.md`](internal/snmp/drivers/README.md).
 
+## Logging
+
+The program logs to standard error using Go's `log/slog`: one line per event,
+with key=value fields. Choose how much you see and the format with flags or
+environment variables (handy in Docker):
+
+| Flag | Environment variable | Values (default first) |
+|---|---|---|
+| `-log-level` | `SWITCHGOPHER_LOG_LEVEL` | `info`, `debug`, `warn`, `error` |
+| `-log-format` | `SWITCHGOPHER_LOG_FORMAT` | `text`, `json` (one JSON object per line, for log collectors) |
+
+| Level | What you see at it |
+|---|---|
+| `error` | Something failed that should not have: a database error, a page returning 500, or a startup failure just before the program exits |
+| `warn` | Something failed but the program carries on: a device did not answer a poll, an optional fetch failed, a failed login, a config file that was not found |
+| `info` (default) | Normal events: startup, seeding, `poll cycle complete` (devices, succeeded, failed, how long it took), pruning, successful logins |
+| `debug` | Everything above plus every web request (method, path, status, time), each device poll, and optional features a device does not support |
+
+Each level includes the ones above it, so `warn` shows warnings and errors only.
+
+Example lines:
+
+```
+level=INFO msg="poll cycle complete" devices=40 succeeded=38 failed=2 took=4.2s
+level=WARN msg="device poll failed" device=core-1 err="...timeout..."
+level=WARN msg="login failed" remote=203.0.113.9:51422
+```
+
+Every web request gets an ID, shown as `request_id` in its log lines and
+returned in the `X-Request-ID` response header. If a page fails, the error page
+says `(reference: <id>)`, so someone can report that and you can search the log
+for it. A valid `X-Request-ID` sent by a reverse proxy is reused, so one request
+can be followed from the proxy's log into this one.
+
+Passwords, community strings, SNMPv3 passphrases and the username on a failed
+login are never logged. To change the level of a running Docker deployment, set
+`SWITCHGOPHER_LOG_LEVEL` in `.env` and run `docker compose up -d`.
+
+### Log rotation
+
+The program only writes to standard error; it does not rotate or delete
+anything itself, so something else must keep the logs from growing forever.
+
+**Docker.** Docker collects the container's output with a logging driver.
+Docker's default driver, `json-file`, has **no size limit** unless you set one,
+so an unattended container will eventually fill the disk. The supplied
+`docker-compose.yml` therefore sets:
+
+```yaml
+logging:
+  driver: local
+  options:
+    max-size: "10m"   # rotate a file at 10 MB
+    max-file: "5"     # keep 5 files, delete the oldest (about 50 MB at most)
+```
+
+The `local` driver stores logs compactly and compresses rotated files, and
+`docker compose logs` keeps working. Change the numbers to keep more or less.
+At the default Info level a deployment writes only a few lines per poll cycle
+plus logins; `debug` also logs every request (including Docker's own health
+check every 30 seconds), so it produces far more.
+
+To apply limits to every container on a host instead, set them in
+`/etc/docker/daemon.json` (`{"log-driver": "local", "log-opts": {"max-size":
+"10m", "max-file": "5"}}`) and restart the Docker daemon; this affects only
+containers created afterwards. To send logs to a collector instead (journald,
+syslog, Fluentd, Loki and others), choose that driver; see Docker's logging
+driver documentation, and use `-log-format json` for collectors that parse JSON.
+
+**Without Docker.** Under systemd, the journal rotates the output for you
+(`journalctl -u switchgopher`). Otherwise redirect standard error to a file
+(`switchgopher 2>> /var/log/switchgopher.log`) and rotate it with `logrotate`
+using the `copytruncate` option, because the program keeps the file open.
+
 ## Troubleshooting
 
 | Symptom | Likely cause and fix |
 |---|---|
 | `web login not configured: ...` and the server exits | `SWITCHGOPHER_PASSWORD_HASH` is missing or not a bcrypt hash. Generate one with `-hash-password` and single-quote it (it contains `$`) |
-| `environment variable X is not set` for a device | `devices.json` references `${X}` and the server's environment lacks it. Set it, or use a literal value |
-| Pages are empty | Nothing has polled successfully yet. Read the log for `poll <device>:` errors. `go run ./cmd/switchgopher -pollonce <device>` polls one device and prints the error |
+| `device poll failed` with `environment variable X is not set` | `devices.json` references `${X}` and the server's environment lacks it. Set it, or use a literal value |
+| Pages are empty | Nothing has polled successfully yet. Read the log for `device poll failed` warnings, and the `poll cycle complete` line (it counts how many devices succeeded and failed). `go run ./cmd/switchgopher -pollonce <device>` polls one device and prints the error. See "Logging" for more detail with `-log-level debug` |
 | `context deadline exceeded` on a poll | The device did not answer: wrong address or port, a firewall or SNMP access list, or the wrong community / SNMPv3 settings |
 | `listen tcp :8000: bind: address already in use` | Something else uses the port; pass `-port` |
 | A device is missing from Devices | It is not in `configuration/devices.json`, or you have not re-run `-seed` since adding it |
 | Configs and Diffs say "not available" | SwitchGopher does not fetch configs itself; put saved copies under `resources/configs/` (see its README) |
-| Logs say `no implementation registered for group ...` | Normal for devices that do not support an optional feature; that group is skipped |
+| A device is polled but some columns stay empty | Not every switch supports every feature (PoE, temperature, CPU). Run with `-log-level debug` to see which optional features a device lacks |
 | From Docker, devices time out | Your devices may only accept SNMP from the host's address; try `network_mode: host` |
 
 ## Docker
@@ -219,8 +293,8 @@ own machine or on a server.
 
 1. **Site configuration.** Copy and edit the config files exactly as in the
    quick start. Do this first: the container bind-mounts `./configuration`, and
-   with no `devices.json` it starts with **no devices** (the log says
-   `devices.json not found, treating as empty`).
+   with no `devices.json` it starts with **no devices** (the log warns
+   `config file not found; treating it as empty file=configuration/devices.json`).
 
    ```sh
    for f in buildings categories vlans devices; do

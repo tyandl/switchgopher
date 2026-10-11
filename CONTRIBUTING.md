@@ -50,8 +50,8 @@ go run ./cmd/switchgopher -pollonce test-sim
 ```
 
 `-pollonce` prints an error naming whatever failed, which is the fastest way
-to debug a fetch change. Log lines saying `no implementation registered for
-group ...` are normal: that group is simply skipped. What the simulator can and cannot do: it answers the
+to debug a fetch change. Add `-log-level debug` to also see which optional
+features the device does not support (that is normal for the simulator). What the simulator can and cannot do: it answers the
 standard system and interface tables, but it has **no CDP and no forwarding
 table (FDB)**, so those code paths are covered only by unit tests.
 
@@ -104,6 +104,18 @@ change up. Once real data exists, add a migration step to `Setup`.
   restates the code is noise. Package comments describe what the package is for.
 - **SQL:** always use `?` placeholders. Never build a query by concatenating
   anything that came from a request or a config file.
+- **Logging:** use `log/slog` (`slog.Info("seeded", "devices", n)`), never
+  `fmt.Println` or the old `log` package, and put the details in key/value
+  attributes rather than the message. Pick the level by the table in
+  `internal/logging`: Debug for investigation detail, Info for normal events,
+  Warn when something failed but the program carries on, Error when something
+  failed that should not have. In a `main` function, `fatal(...)` logs at Error
+  and exits. A fetcher whose device just lacks a feature wraps
+  `snmp.ErrNotSupported` so it logs at Debug instead of Warn. **Never log a
+  secret** (community string, passphrase, password, session cookie) or a
+  request's query string or body. Logs written while handling a web request
+  should include `"request_id", requestIDFrom(req.Context())`. Returning an error is better than logging it
+  and also returning it: log where the error is finally handled.
 - **Errors:** return them with context (`fmt.Errorf("doing X: %w", err)`);
   poller errors are logged and the next cycle retries. Handlers return
   `http.Error`.
